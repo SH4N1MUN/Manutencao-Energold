@@ -147,23 +147,21 @@ function getProjetoRows(projeto){
   const codigo = String(projeto || '').trim();
   if(!codigo) return [];
 
-  if(remoteCadastros && Array.isArray(remoteCadastros.linhasProjeto) && remoteCadastros.linhasProjeto.length){
-    return remoteCadastros.linhasProjeto
-      .filter(r => String((r && r.projeto) || '').trim() === codigo)
-      .map(r => ({
-        projeto: String((r && r.projeto) || '').trim(),
-        cliente: String((r && r.cliente) || '').trim(),
-        local: String((r && r.local) || '').trim()
-      }));
-  }
+if(remoteCadastros && Array.isArray(remoteCadastros.linhasProjeto) && remoteCadastros.linhasProjeto.length){
+  return remoteCadastros.linhasProjeto
+    .filter(r => String((r && r.projeto) || '').trim() === codigo)
+    .map(r => ({
+      projeto: String((r && r.projeto) || '').trim(),
+      cliente: String((r && r.cliente) || '').trim()
+    }));
+}
 
   return (REF.projetos || [])
-    .filter(p => String((p && p.id) || '').trim() === codigo)
-    .map(p => ({
-      projeto: String((p && p.id) || '').trim(),
-      cliente: String((p && p.cliente) || '').trim(),
-      local: String((p && p.local) || '').trim()
-    }));
+  .filter(p => String((p && p.id) || '').trim() === codigo)
+  .map(p => ({
+    projeto: String((p && p.id) || '').trim(),
+    cliente: String((p && p.cliente) || '').trim()
+  }));
 }
 
 function getProjetosFonte(){
