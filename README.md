@@ -23,3 +23,9 @@ Estrutura preparada para GitHub Pages e instalação como PWA.
 ## Observações
 - O backend continua sendo o Apps Script já configurado no seu código.
 - O projeto foi modularizado em estrutura de pastas, mantendo a lógica principal no `js/app.js` para preservar o comportamento atual.
+
+
+## Atualizações da versão
+- correção do menu lateral mobile em iOS e Android
+- campo Local agora mostra locais gerais + locais do projeto
+- refinamentos visuais para telas pequenas
