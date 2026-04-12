@@ -629,7 +629,7 @@ async function showPage(p){
   closeSidebar();
   if(p==='dashboard') renderDash();
   if(p==='lista-os'){ populateFiltros(); renderLista(); }
-  if(p==='nova-os'){ setEditingOS(true); populateSelects(); if(!document.getElementById('edit-id').value) resetForm(); }
+  if (p === 'nova-os') {   const editId = document.getElementById('edit-id').value;    if (editId) {     setEditingOS(true);     populateSelects();   } else {     resetForm();     populateSelects();   } }
   if(p==='perfis'){ populatePerfilSelects(); renderPerfis(); }
   if(p==='configuracoes') loadConfig();
   if(p !== 'nova-os' && (wasEditing || pendingRemoteRefresh)){
@@ -773,7 +773,7 @@ function getProximoNumeroOS(){
 }
 
 function resetForm(){
-  setEditingOS(true);
+  setEditingOS(false);
   document.getElementById('os-form').reset();
   document.getElementById('edit-id').value = '';
   document.getElementById('form-title').innerHTML = 'Nova Ordem de Serviço <small>Estrutura: Ativo → Módulo → Componente / TAG</small>';
@@ -782,9 +782,10 @@ function resetForm(){
   document.getElementById('f-cliente').value = '';
   document.getElementById('f-tempo').value = '';
   document.getElementById('f-data').value = '';
-  const comp = document.getElementById('f-componente');
-  if(comp) comp.innerHTML = '<option value="">— Primeiro selecione o módulo —</option>';
   document.getElementById('f-hor-atual').value = '';
+
+  const comp = document.getElementById('f-componente');
+  if (comp) comp.innerHTML = '<option value="">— Primeiro selecione o módulo —</option>';
 }
 
 async function salvarOS(e){
