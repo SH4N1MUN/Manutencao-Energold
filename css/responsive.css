@@ -148,3 +148,127 @@
 }
 
 @media (max-width: 480px) { .login-card { padding: 32px 22px 28px; margin: 16px; } }
+
+
+/* ── REFINOS MOBILE V2 ── */
+@media (max-width: 768px) {
+  header.brand-header{
+    display:grid;
+    grid-template-columns:1fr;
+    align-items:start;
+    gap:12px;
+    padding:12px;
+  }
+
+  .logo-area{
+    width:100%;
+    display:grid;
+    grid-template-columns:40px minmax(0,1fr);
+    align-items:center;
+    gap:12px;
+  }
+
+  .btn-menu{
+    width:40px;
+    height:40px;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+  }
+
+  .brand-logo-header,
+  .brand-logo-sidebar{
+    max-width:100%;
+    height:auto;
+    max-height:42px;
+  }
+
+  .header-right{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    justify-content:stretch !important;
+  }
+
+  .header-right > .btn,
+  .login-user-info,
+  .v4-sync-area{
+    width:100% !important;
+  }
+
+  .header-right > .btn{
+    justify-content:center;
+    min-height:48px;
+  }
+
+  .v4-sync-area{
+    border-radius:16px !important;
+    padding:10px 12px !important;
+  }
+
+  .v4-sync-btn{
+    width:100% !important;
+    justify-content:center;
+    min-height:44px;
+  }
+
+  .login-user-info{
+    justify-content:center;
+    min-height:46px;
+  }
+
+  .login-logout-dropdown{
+    top:auto !important;
+    right:12px !important;
+    left:12px !important;
+    min-width:0 !important;
+  }
+
+  .page-title{
+    font-size:18px;
+    margin-bottom:14px;
+  }
+
+  .search-bar{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    align-items:stretch !important;
+  }
+
+  .search-bar > *{
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+  }
+
+  .search-bar .btn{
+    justify-content:center;
+  }
+
+  .tbl-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .dev-footer{
+    position:static !important;
+    margin-top:16px;
+  }
+
+  .main{
+    padding-bottom:20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main{padding:12px !important;}
+  .card{border-radius:12px;}
+  .card-bd{padding:12px !important;}
+  .v4-status{font-size:11px !important;}
+  .v4-sync-hora{font-size:10px !important;}
+  .brand-logo-header{max-height:36px;}
+  .btn, input, select, textarea{font-size:16px !important;}
+}
