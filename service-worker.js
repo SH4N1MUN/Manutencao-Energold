@@ -1,4 +1,4 @@
-const CACHE_NAME = 'energold-github-pwa-v4';
+const CACHE_NAME = 'energold-github-pwa-v5';
 
 const FILES_TO_CACHE = [
   './',
