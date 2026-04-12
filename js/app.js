@@ -189,9 +189,6 @@ function getClienteFromProjeto(projeto){
 }
 
 function getLocaisFromProjeto(projeto){
-  const rows = getProjetoRows(projeto);
-  const locais = uniqueSorted(rows.map(r => r.local));
-  if(locais.length) return locais;
   return remoteOrLocal('locais', REF.locais);
 }
 
