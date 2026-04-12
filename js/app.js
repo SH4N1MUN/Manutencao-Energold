@@ -231,6 +231,30 @@ async function carregarCadastrosGoogle(){
   return false;
 }
 
+function getSistemasFonte(){
+  if (
+    remoteCadastros &&
+    Array.isArray(remoteCadastros.sistemas) &&
+    remoteCadastros.sistemas.length
+  ) {
+    return remoteCadastros.sistemas;
+  }
+
+  return REF.sistemas || [];
+}
+
+function getComponentesPorSistemaFonte(sistema){
+  if (
+    remoteCadastros &&
+    remoteCadastros.componentesPorSistema &&
+    Array.isArray(remoteCadastros.componentesPorSistema[sistema])
+  ) {
+    return remoteCadastros.componentesPorSistema[sistema];
+  }
+
+  return (REF.componentesPorSistema && REF.componentesPorSistema[sistema]) || [];
+}
+
 function toInputDateTimeValue(value){
   if(!value) return '';
   const txt = String(value).trim();
@@ -699,10 +723,15 @@ tagSel.innerHTML = '<option value="">— Selecione o TAG —</option>' +
     }
   }
 
-  const sistSel = document.getElementById('f-sistema');
-  const curSist = sistSel.value;
-  sistSel.innerHTML = '<option value="">— Selecione —</option>' +
-    [...REF.sistemas].sort().map(s=>`<option value="${s}"${s===curSist?' selected':''}>${s}</option>`).join('');
+const sistSel = document.getElementById('f-sistema');
+const curSist = sistSel.value;
+
+const sistemasFonte = getSistemasFonte();
+
+sistSel.innerHTML = '<option value="">— Selecione —</option>' +
+  [...sistemasFonte].sort().map(s =>
+    `<option value="${s}"${s===curSist?' selected':''}>${s}</option>`
+  ).join('');
 
   onProjetoChange();
   populateComponenteOptions(curSist, document.getElementById('f-componente').value);
@@ -742,7 +771,7 @@ function onProjetoChange(){
 function populateComponenteOptions(sistema, selected=''){
   const compSel = document.getElementById('f-componente');
   if(!compSel) return;
-  const itens = REF.componentesPorSistema[sistema] || [];
+  const itens = getComponentesPorSistemaFonte(sistema);
   if(!sistema){
     compSel.innerHTML = '<option value="">— Primeiro selecione o módulo —</option>';
     return;
