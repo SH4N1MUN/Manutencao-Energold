@@ -656,7 +656,9 @@ function populateSelects(){
 
   const locSel = document.getElementById('f-local');
   const curLoc = locSel.value;
-  const locaisFonte = curProj ? getLocaisFromProjeto(curProj) : remoteOrLocal('locais', REF.locais);
+  const locaisProjeto = curProj ? getLocaisFromProjeto(curProj) : [];
+  const locaisGerais = remoteOrLocal('locais', REF.locais);
+  const locaisFonte = uniqueSorted([...locaisProjeto, ...locaisGerais]);
   const locaisFinal = curLoc && !locaisFonte.includes(curLoc) ? uniqueSorted([...locaisFonte, curLoc]) : locaisFonte;
   locSel.innerHTML = '<option value="">— Selecione —</option>' +
     locaisFinal.map(l=>`<option value="${l}"${l===curLoc?' selected':''}>${l}</option>`).join('');
@@ -707,10 +709,12 @@ function onProjetoChange(){
   const clienteProjeto = getClienteFromProjeto(id);
   clienteEl.value = clienteProjeto || '';
 
-  const locaisProjeto = id ? getLocaisFromProjeto(id) : remoteOrLocal('locais', REF.locais);
-  const locaisFinal = localAtual && !locaisProjeto.includes(localAtual)
-    ? uniqueSorted([...locaisProjeto, localAtual])
-    : locaisProjeto;
+  const locaisProjeto = id ? getLocaisFromProjeto(id) : [];
+  const locaisGerais = remoteOrLocal('locais', REF.locais);
+  const locaisBase = uniqueSorted([...locaisProjeto, ...locaisGerais]);
+  const locaisFinal = localAtual && !locaisBase.includes(localAtual)
+    ? uniqueSorted([...locaisBase, localAtual])
+    : locaisBase;
 
   if(localEl){
     localEl.innerHTML = '<option value="">— Selecione —</option>' +

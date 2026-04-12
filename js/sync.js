@@ -18,7 +18,8 @@
     const btnMenu = document.querySelector('.btn-menu');
 
     if (btnMenu && sidebar) {
-      btnMenu.addEventListener('click', function (event) {
+      btnMenu.addEventListener('pointerup', function (event) {
+        event.preventDefault();
         event.stopPropagation();
         toggleSidebar();
       });
@@ -40,14 +41,10 @@
     updateHora();
   });
 
-  const originalToggleSidebar = window.toggleSidebar;
   window.toggleSidebar = function () {
     const sidebar = document.getElementById('sidebar') || document.querySelector('.sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('open');
-    if (typeof originalToggleSidebar === 'function' && originalToggleSidebar !== window.toggleSidebar) {
-      try { originalToggleSidebar(); } catch (e) {}
-    }
   };
 
   setInterval(updateHora, 1000);
