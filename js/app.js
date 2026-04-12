@@ -197,6 +197,22 @@ function getLocaisFromProjeto(projeto){
   return remoteOrLocal('locais', REF.locais);
 }
 
+function getEquipamentosFonte(){
+  if (
+    remoteCadastros &&
+    Array.isArray(remoteCadastros.linhasEquipamento) &&
+    remoteCadastros.linhasEquipamento.length
+  ) {
+    return remoteCadastros.linhasEquipamento.map(e => ({
+      tag: Number(e.tag),
+      nome: e.equipamento,
+      modelo: e.modelo
+    }));
+  }
+
+  return REF.equipamentos || [];
+}
+
 async function carregarCadastrosGoogle(){
   try{
     const result = await apiGet('listarCadastros');
@@ -645,8 +661,10 @@ function closeSidebar(){ document.getElementById('sidebar').classList.remove('op
 function populateSelects(){
   const tagSel = document.getElementById('f-tag');
   const curTag = tagSel.value;
-  tagSel.innerHTML = '<option value="">— Selecione o TAG —</option>' +
-    REF.equipamentos.map(e=>`<option value="${e.tag}"${e.tag==curTag?' selected':''}>${e.tag} — ${e.nome}</option>`).join('');
+  const equipamentosFonte = getEquipamentosFonte();
+
+tagSel.innerHTML = '<option value="">— Selecione o TAG —</option>' +
+  equipamentosFonte.map(e=>`<option value="${e.tag}"${String(e.tag)===String(curTag)?' selected':''}>${e.tag} — ${e.nome}</option>`).join('');
 
   const projetosFonte = getProjetosFonte();
   const projSel = document.getElementById('f-projeto');
@@ -696,8 +714,8 @@ function populateSelects(){
 }
 
 function onTagChange(){
-  const tag = parseInt(document.getElementById('f-tag').value);
-  const eq = REF.equipamentos.find(e=>e.tag===tag);
+  const tag = Number(document.getElementById('f-tag').value);
+  const eq = getEquipamentosFonte().find(e => Number(e.tag) === tag);
   document.getElementById('f-modelo').value = eq ? eq.modelo : '';
 }
 function onProjetoChange(){
@@ -801,7 +819,7 @@ async function salvarOS(e){
   const ms = ini && fim ? new Date(fim) - new Date(ini) : 0;
   const tempoH = ms > 0 ? ms/1000/3600 : 0;
   const tag = parseInt(document.getElementById('f-tag').value);
-  const eq = REF.equipamentos.find(eq=>eq.tag===tag);
+  const eq = getEquipamentosFonte().find(eq => Number(eq.tag) === Number(tag));
   const proj = document.getElementById('f-projeto').value;
   const clienteProjeto = getClienteFromProjeto(proj);
   const editId = document.getElementById('edit-id').value;
