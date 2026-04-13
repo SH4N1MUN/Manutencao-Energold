@@ -228,6 +228,10 @@ UIModule.animateCounter = function(el, target, duration = 600) {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
-  // Atrasa tooltips para não bloquear render inicial
   setTimeout(UIModule.initTooltips, 800);
 });
+
+// Expõe globalmente para ser chamado de qualquer lugar (ex: sync.js após refresh)
+window.renderDashCharts = function(lista) {
+  UIModule.renderDashCharts(lista || window.os_list || []);
+};
