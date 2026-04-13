@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════
 // UI.JS — Helpers de Interface + Gráficos Dashboard
 // ENERGOLD Controle de Manutenção v2
+// Versão executiva + estável
 // ════════════════════════════════════════════════════
 window.UIModule = window.UIModule || {};
 
@@ -15,13 +16,42 @@ UIModule.escapeHtml = function(value) {
     .replaceAll("'", '&#39;');
 };
 
-// ── GRÁFICOS INLINE (SVG/HTML puro, sem dependências) ──
+UIModule.getSafeOSList = function(list) {
+  return list || (typeof os_list !== 'undefined' ? os_list : window.os_list) || [];
+};
+
+UIModule.isDashboardVisible = function() {
+  const page = document.getElementById('page-dashboard');
+  return !!(page && page.classList.contains('active'));
+};
+
+// ── ANIMAÇÕES ──
+
+(function ensureUIAnimations() {
+  if (document.getElementById('ui-chart-animations')) return;
+
+  const style = document.createElement('style');
+  style.id = 'ui-chart-animations';
+  style.textContent = `
+    @keyframes barGrow {
+      from { width: 0 !important; }
+    }
+    @keyframes fadeInSoft {
+      from { opacity: 0; transform: translateY(2px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// ── GRÁFICOS INLINE ──
 
 UIModule.renderBarChart = function(elId, data, opts = {}) {
   const el = document.getElementById(elId);
   if (!el) return;
 
   const { maxItems = 6, unit = '' } = opts;
+
   const COLORS = [
     'var(--teal)',
     'var(--blue)',
@@ -38,7 +68,13 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
 
   if (!entries.length) {
     el.innerHTML = `
-      <div style="text-align:center;color:var(--muted);font-size:12px;padding:24px 0">
+      <div style="
+        text-align:center;
+        color:var(--muted);
+        font-size:12px;
+        padding:28px 0;
+        animation:fadeInSoft 0.2s ease;
+      ">
         Sem dados
       </div>
     `;
@@ -49,20 +85,20 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
   const total = entries.reduce((s, [, v]) => s + (Number(v) || 0), 0);
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;flex-direction:column;gap:12px;animation:fadeInSoft 0.2s ease">
       ${entries.map(([k, v], i) => {
-        const label = UIModule.escapeHtml ? UIModule.escapeHtml(k) : String(k);
+        const label = UIModule.escapeHtml(k);
         const value = Number(v) || 0;
         const percent = total ? Math.round((value / total) * 100) : 0;
         const isTop = i === 0;
 
         return `
-          <div style="display:flex;flex-direction:column;gap:6px;opacity:${isTop ? '1' : '0.96'}">
+          <div style="display:flex;flex-direction:column;gap:6px;opacity:${isTop ? '1' : '0.97'}">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
               <div
                 style="
                   min-width:110px;
-                  max-width:220px;
+                  max-width:230px;
                   font-size:12px;
                   line-height:1.25;
                   color:${isTop ? 'var(--text1)' : 'var(--text2)'};
@@ -70,6 +106,7 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
                   white-space:nowrap;
                   overflow:hidden;
                   text-overflow:ellipsis;
+                  letter-spacing:0.1px;
                 "
                 title="${label}"
               >${label}</div>
@@ -119,20 +156,6 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
     </div>
   `;
 };
-
-// injeta keyframes só uma vez
-(function ensureUIAnimations() {
-  if (document.getElementById('ui-chart-animations')) return;
-
-  const style = document.createElement('style');
-  style.id = 'ui-chart-animations';
-  style.textContent = `
-    @keyframes barGrow {
-      from { width: 0 !important; }
-    }
-  `;
-  document.head.appendChild(style);
-})();
 
 UIModule.renderSparkline = function(elId, values, color = 'var(--teal)') {
   const el = document.getElementById(elId);
@@ -201,7 +224,7 @@ UIModule.renderDonut = function(elId, percent, color = 'var(--teal)', label = ''
 // ── DASHBOARD CHARTS ──
 
 UIModule.renderDashCharts = function(osList) {
-  const list = osList || (typeof os_list !== 'undefined' ? os_list : window.os_list) || [];
+  const list = UIModule.getSafeOSList(osList);
 
   if (!Array.isArray(list) || !list.length) {
     UIModule.renderBarChart('dash-chart-tipo', {});
@@ -239,6 +262,14 @@ UIModule.renderDashCharts = function(osList) {
   UIModule.renderBarChart('dash-chart-tipo', byTipo, { maxItems: 5 });
   UIModule.renderBarChart('dash-chart-equip', byEquip, { maxItems: 6 });
   UIModule.renderBarChart('dash-chart-mec', byMec, { maxItems: 6 });
+};
+
+UIModule.safeRenderDashCharts = function(osList) {
+  try {
+    UIModule.renderDashCharts(osList);
+  } catch (e) {
+    console.error('Erro ao renderizar gráficos do dashboard:', e);
+  }
 };
 
 // ── INDICADOR DE PENDENTES ──
@@ -281,7 +312,7 @@ UIModule.initTooltips = function() {
         pointer-events:none;
         z-index:9999;
         box-shadow:0 4px 12px rgba(0,0,0,0.3);
-        animation:fadeIn 0.15s ease;
+        animation:fadeInSoft 0.15s ease;
       `;
       this.appendChild(tip);
     });
@@ -315,9 +346,7 @@ UIModule.animateCounter = function(el, target, duration = 600) {
       : current.toFixed(1);
 
     if (i >= steps) {
-      el.textContent = Number.isInteger(numericTarget)
-        ? String(numericTarget)
-        : String(numericTarget);
+      el.textContent = String(Number.isInteger(numericTarget) ? numericTarget : numericTarget);
       clearInterval(timer);
     }
   }, step);
@@ -325,23 +354,21 @@ UIModule.animateCounter = function(el, target, duration = 600) {
 
 // ── PATCH renderDash ──
 
-(function() {
-  const _orig = window.renderDash;
+UIModule.tryPatchRenderDash = function() {
+  if (window.__uiRenderDashPatched) return true;
+  if (typeof window.renderDash !== 'function') return false;
 
-  if (typeof _orig === 'function') {
-    window.renderDash = function() {
-      _orig.apply(this, arguments);
+  const original = window.renderDash;
 
-      const atualizada = (typeof os_list !== 'undefined' ? os_list : window.os_list) || [];
+  window.renderDash = function() {
+    original.apply(this, arguments);
+    const atualizada = UIModule.getSafeOSList();
+    UIModule.safeRenderDashCharts(atualizada);
+  };
 
-      try {
-        UIModule.renderDashCharts(atualizada);
-      } catch (e) {
-        console.error('Erro ao renderizar gráficos no patch renderDash:', e);
-      }
-    };
-  }
-})();
+  window.__uiRenderDashPatched = true;
+  return true;
+};
 
 // ── INIT ──
 
@@ -354,6 +381,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, 300);
 
+  // tenta patchar renderDash várias vezes até existir
+  let patchAttempts = 0;
+  const patchTimer = setInterval(() => {
+    patchAttempts++;
+    const ok = UIModule.tryPatchRenderDash();
+    if (ok || patchAttempts >= 40) clearInterval(patchTimer);
+  }, 250);
+
+  // primeira renderização defensiva
+  setTimeout(() => {
+    UIModule.safeRenderDashCharts(UIModule.getSafeOSList());
+  }, 500);
+
   let attempts = 0;
   let lastSignature = '';
 
@@ -361,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attempts++;
 
     try {
-      const listaAtiva = (typeof os_list !== 'undefined' ? os_list : window.os_list) || [];
+      const listaAtiva = UIModule.getSafeOSList();
 
       const signature = JSON.stringify(
         [...listaAtiva]
@@ -376,12 +416,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (signature !== lastSignature) {
         lastSignature = signature;
-        UIModule.renderDashCharts(listaAtiva);
+        UIModule.safeRenderDashCharts(listaAtiva);
       }
     } catch (e) {
       console.error('Erro no polling dos gráficos:', e);
     }
 
-    if (attempts >= 40) clearInterval(chartPoll);
+    if (attempts >= 120) clearInterval(chartPoll);
   }, 1000);
+
+  // quando a aba volta a ficar visível
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      UIModule.safeRenderDashCharts(UIModule.getSafeOSList());
+    }
+  });
+
+  // quando a janela recebe foco
+  window.addEventListener('focus', function() {
+    UIModule.safeRenderDashCharts(UIModule.getSafeOSList());
+  });
+
+  // expõe helper global opcional
+  window.safeRenderDashCharts = UIModule.safeRenderDashCharts;
 });
