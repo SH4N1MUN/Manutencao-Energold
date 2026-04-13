@@ -2012,9 +2012,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   populatePerfilSelects();
 
   // ── MENU USUÁRIO / LOGOUT ──
-  const userBtn = document.querySelector('.login-user-info');
-  const userWrap = document.querySelector('.login-user-wrapper');
+  const userBtn = document.getElementById('login-user-badge');
+  const userWrap = document.getElementById('login-user-wrapper');
   const dropdown = document.getElementById('login-logout-menu');
+  const logoutBtn = document.getElementById('logout-action');
 
   if (userBtn && userWrap && dropdown) {
     function positionDropdown() {
@@ -2034,8 +2035,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function toggleDropdown(e) {
-      e.preventDefault();
-      e.stopPropagation();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
       if (dropdown.classList.contains('open')) {
         closeDropdown();
@@ -2044,18 +2047,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // remove onclick inline antigo, se existir
     userBtn.onclick = null;
 
-    // mobile + desktop
-    userBtn.addEventListener('pointerup', toggleDropdown);
-    userBtn.addEventListener('click', toggleDropdown);
+    // usa pointerup para funcionar melhor no mobile
+    if (!userBtn.dataset.boundMenu) {
+      userBtn.dataset.boundMenu = '1';
+      userBtn.addEventListener('pointerup', toggleDropdown);
+    }
 
     dropdown.addEventListener('pointerdown', function (e) {
       e.stopPropagation();
     });
 
-    dropdown.addEventListener('click', function (e) {
+    dropdown.addEventListener('pointerup', function (e) {
       e.stopPropagation();
     });
 
@@ -2070,13 +2074,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         positionDropdown();
       }
     });
+
+    if (logoutBtn && !logoutBtn.dataset.boundLogout) {
+      logoutBtn.dataset.boundLogout = '1';
+
+      logoutBtn.addEventListener('pointerup', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDropdown();
+
+        if (typeof logout === 'function') {
+          logout();
+        } else {
+          console.error('Função logout() não encontrada.');
+        }
+      });
+    }
   } else {
     console.warn('Menu de usuário não encontrado no DOM.');
   }
-
-  startAutoRefreshLoop();
-  setInterval(garantirAssinaturaDev, 3000);
-});
 
 // ════════════════════════════════════════════════════
 // FORMATAR DATA_REGISTRO
