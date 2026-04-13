@@ -226,12 +226,39 @@ UIModule.animateCounter = function(el, target, duration = 600) {
   }, step);
 };
 
+// ── PATCH renderDash ──
+// ui.js carrega DEPOIS de app.js (ordem dos <script> no HTML),
+// então window.renderDash já existe aqui. Fazemos o patch imediatamente,
+// sem esperar DOMContentLoaded.
+(function() {
+  var _orig = window.renderDash;
+  if (typeof _orig === 'function') {
+    window.renderDash = function() {
+      _orig.apply(this, arguments);
+      try { UIModule.renderDashCharts(window.os_list || []); } catch(e) {}
+    };
+  }
+})();
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(UIModule.initTooltips, 800);
-});
 
-// Expõe globalmente para ser chamado de qualquer lugar (ex: sync.js após refresh)
-window.renderDashCharts = function(lista) {
-  UIModule.renderDashCharts(lista || window.os_list || []);
-};
+  // Polling: tenta renderizar os gráficos a cada 1s até os dados chegarem do Sheets
+  // Para depois de 30s ou quando os dados tiverem sido renderizados com sucesso
+  var attempts = 0;
+  var maxAttempts = 30;
+  var lastCount = -1;
+  var chartPoll = setInterval(function() {
+    attempts++;
+    try {
+      var lista = window.os_list || [];
+      // Só re-renderiza se a lista mudou de tamanho ou é a primeira vez com dados
+      if (lista.length > 0 && lista.length !== lastCount) {
+        lastCount = lista.length;
+        UIModule.renderDashCharts(lista);
+      }
+    } catch(e) {}
+    if (attempts >= maxAttempts) clearInterval(chartPoll);
+  }, 1000);
+});
