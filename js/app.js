@@ -2011,6 +2011,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateSelects();
   populatePerfilSelects();
 
+  // ── MENU USUÁRIO / LOGOUT ──
+  const userBtn = document.querySelector('.login-user-info');
+  const userWrap = document.querySelector('.login-user-wrapper');
+  const dropdown = document.getElementById('login-logout-menu');
+
+  if (userBtn && userWrap && dropdown) {
+    function positionDropdown() {
+      const rect = userBtn.getBoundingClientRect();
+      dropdown.style.top = `${rect.bottom + 8}px`;
+      dropdown.style.right = '14px';
+      dropdown.style.left = 'auto';
+    }
+
+    function openDropdown() {
+      positionDropdown();
+      dropdown.classList.add('open');
+    }
+
+    function closeDropdown() {
+      dropdown.classList.remove('open');
+    }
+
+    function toggleDropdown(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (dropdown.classList.contains('open')) {
+        closeDropdown();
+      } else {
+        openDropdown();
+      }
+    }
+
+    // remove onclick inline antigo, se existir
+    userBtn.onclick = null;
+
+    // mobile + desktop
+    userBtn.addEventListener('pointerup', toggleDropdown);
+    userBtn.addEventListener('click', toggleDropdown);
+
+    dropdown.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+    });
+
+    dropdown.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('pointerdown', function (e) {
+      if (!userWrap.contains(e.target) && !dropdown.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (dropdown.classList.contains('open')) {
+        positionDropdown();
+      }
+    });
+  } else {
+    console.warn('Menu de usuário não encontrado no DOM.');
+  }
+
   startAutoRefreshLoop();
   setInterval(garantirAssinaturaDev, 3000);
 });
