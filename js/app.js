@@ -2216,28 +2216,39 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  // evita bind duplicado
+  // workaround Safari/iPhone: força reconhecimento de alvo clicável
+  userBtn.addEventListener('click', function () {}, { passive: true });
+
+  let justOpened = false;
+
   if (!userBtn.dataset.boundMenu) {
     userBtn.dataset.boundMenu = '1';
 
-    // usa pointerup para desktop + mobile
     userBtn.addEventListener('pointerup', function (e) {
+      justOpened = true;
       toggleLogoutMenu(e);
+
+      setTimeout(() => {
+        justOpened = false;
+      }, 120);
     });
 
-    // impede fechar ao tocar dentro do menu
+    dropdown.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+    });
+
     dropdown.addEventListener('pointerup', function (e) {
       e.stopPropagation();
     });
 
-    // fecha ao tocar fora
     document.addEventListener('pointerup', function (e) {
+      if (justOpened) return;
+
       if (!wrapper.contains(e.target)) {
         closeLogoutMenu();
       }
     });
 
-    // reposiciona se necessário
     window.addEventListener('resize', function () {
       if (dropdown.classList.contains('open')) {
         openLogoutMenu();
@@ -2245,9 +2256,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // botão sair
   if (logoutBtn && !logoutBtn.dataset.boundLogout) {
     logoutBtn.dataset.boundLogout = '1';
+
+    // workaround Safari/iPhone também no item sair
+    logoutBtn.addEventListener('click', function () {}, { passive: true });
 
     logoutBtn.addEventListener('pointerup', function (e) {
       e.preventDefault();
