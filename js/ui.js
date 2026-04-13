@@ -38,7 +38,7 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
 
   if (!entries.length) {
     el.innerHTML = `
-      <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px 0">
+      <div style="text-align:center;color:var(--muted);font-size:12px;padding:24px 0">
         Sem dados
       </div>
     `;
@@ -46,54 +46,73 @@ UIModule.renderBarChart = function(elId, data, opts = {}) {
   }
 
   const max = Math.max(...entries.map(([, v]) => Number(v)), 1);
+  const total = entries.reduce((s, [, v]) => s + (Number(v) || 0), 0);
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;flex-direction:column;gap:12px">
       ${entries.map(([k, v], i) => {
-        const label = UIModule.escapeHtml(k);
+        const label = UIModule.escapeHtml ? UIModule.escapeHtml(k) : String(k);
         const value = Number(v) || 0;
+        const percent = total ? Math.round((value / total) * 100) : 0;
+        const isTop = i === 0;
 
         return `
-          <div style="display:flex;align-items:flex-start;gap:9px;font-size:12px">
-            <div style="
-              font-size:11px;
-              color:var(--text2);
-              min-width:90px;
-              max-width:140px;
-              white-space:normal;
-              line-height:1.2;
-              flex-shrink:0;
-              word-break:break-word;
-            " title="${label}">${label}</div>
+          <div style="display:flex;flex-direction:column;gap:6px;opacity:${isTop ? '1' : '0.96'}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div
+                style="
+                  min-width:110px;
+                  max-width:220px;
+                  font-size:12px;
+                  line-height:1.25;
+                  color:${isTop ? 'var(--text1)' : 'var(--text2)'};
+                  font-weight:${isTop ? '700' : '500'};
+                  white-space:nowrap;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                "
+                title="${label}"
+              >${label}</div>
+
+              <div style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+                flex-shrink:0;
+                font-family:var(--font-mono);
+              ">
+                <span style="
+                  font-size:11px;
+                  color:var(--text2);
+                ">${percent}%</span>
+                <span style="
+                  min-width:20px;
+                  text-align:right;
+                  font-size:12px;
+                  color:var(--text1);
+                  font-weight:${isTop ? '700' : '600'};
+                ">${value}${unit}</span>
+              </div>
+            </div>
 
             <div style="
-              flex:1;
-              height:13px;
+              width:100%;
+              height:14px;
               background:var(--bg3);
-              border-radius:3px;
+              border-radius:999px;
               overflow:hidden;
               position:relative;
-              margin-top:2px;
             ">
               <div style="
                 height:100%;
                 width:${((value / max) * 100).toFixed(1)}%;
                 background:${COLORS[i % COLORS.length]};
-                border-radius:3px;
+                border-radius:999px;
                 transition:width 0.6s ease;
                 animation:barGrow 0.5s ease ${i * 0.06}s both;
+                box-shadow:${isTop ? '0 0 0 1px rgba(255,255,255,0.18) inset' : 'none'};
               "></div>
             </div>
-
-            <div style="
-              font-family:var(--font-mono);
-              font-size:11px;
-              color:var(--text1);
-              min-width:22px;
-              text-align:right;
-              flex-shrink:0;
-              margin-top:1px;
-            ">${value}${unit}</div>
           </div>
         `;
       }).join('')}
