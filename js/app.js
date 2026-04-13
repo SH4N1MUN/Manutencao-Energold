@@ -2151,21 +2151,25 @@ function gerarDataRegistroGoogle() {
 // ════════════════════════════════════════════════════
 // MENU USUÁRIO / LOGOUT
 // ════════════════════════════════════════════════════
+
 function openLogoutMenu() {
   const dropdown = document.getElementById('login-logout-menu');
-  const userBtn = document.getElementById('login-user-btn');
+  const userBtn = document.getElementById('login-user-badge');
+
   if (!dropdown || !userBtn) return;
 
   const rect = userBtn.getBoundingClientRect();
   dropdown.style.top = `${rect.bottom + 8}px`;
   dropdown.style.right = '14px';
   dropdown.style.left = 'auto';
+
   dropdown.classList.add('open');
 }
 
 function closeLogoutMenu() {
   const dropdown = document.getElementById('login-logout-menu');
   if (!dropdown) return;
+
   dropdown.classList.remove('open');
 }
 
@@ -2186,7 +2190,7 @@ function toggleLogoutMenu(e) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  const userBtn = document.getElementById('login-user-btn');
+  const userBtn = document.getElementById('login-user-badge');
   const dropdown = document.getElementById('login-logout-menu');
   const wrapper = document.querySelector('.login-user-wrapper');
 
@@ -2195,9 +2199,11 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
+  // clique desktop + mobile
   userBtn.addEventListener('click', toggleLogoutMenu);
   userBtn.addEventListener('touchend', toggleLogoutMenu, { passive: false });
 
+  // impedir fechamento ao clicar dentro do menu
   dropdown.addEventListener('click', function (e) {
     e.stopPropagation();
   });
@@ -2206,6 +2212,7 @@ document.addEventListener('DOMContentLoaded', function () {
     e.stopPropagation();
   }, { passive: true });
 
+  // fechar ao clicar fora
   document.addEventListener('click', function (e) {
     if (!wrapper.contains(e.target)) closeLogoutMenu();
   });
@@ -2214,6 +2221,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!wrapper.contains(e.target)) closeLogoutMenu();
   }, { passive: true });
 
+  // reposicionar ao redimensionar
   window.addEventListener('resize', function () {
     if (dropdown.classList.contains('open')) {
       openLogoutMenu();
