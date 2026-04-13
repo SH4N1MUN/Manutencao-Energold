@@ -1,31 +1,40 @@
-# ENERGOLD - Controle de Manutenção
+# 🛠️ ENERGOLD PCM Digital  
+### Sistema de Gestão de Manutenção e Ordens de Serviço
 
-Estrutura preparada para GitHub Pages e instalação como PWA.
+![status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![version](https://img.shields.io/badge/version-v8-blue)
+![stack](https://img.shields.io/badge/stack-JS%20%7C%20Apps%20Script%20%7C%20Sheets-green)
+![license](https://img.shields.io/badge/license-Private-lightgrey)
 
-## Publicar no GitHub Pages
-1. Crie um repositório no GitHub.
-2. Envie todos os arquivos desta pasta mantendo a estrutura.
-3. Vá em **Settings > Pages**.
-4. Em **Build and deployment**, selecione **Deploy from a branch**.
-5. Escolha a branch `main` e a pasta `/root`.
-6. Salve.
+---
 
-## Instalar no celular
-### iPhone
-- Abra a URL publicada no Safari.
-- Toque em **Compartilhar**.
-- Toque em **Adicionar à Tela de Início**.
+## 🚀 Sobre o Projeto
 
-### Android
-- Abra a URL no Chrome.
-- Toque em **Instalar app**.
+O **ENERGOLD PCM Digital** é um sistema completo de gestão de manutenção, desenvolvido para ambientes operacionais reais (mineração, sondagem e indústria), com foco em:
 
-## Observações
-- O backend continua sendo o Apps Script já configurado no seu código.
-- O projeto foi modularizado em estrutura de pastas, mantendo a lógica principal no `js/app.js` para preservar o comportamento atual.
+- 📊 rastreabilidade de ativos  
+- ⚙️ controle de ordens de serviço  
+- 📈 análise operacional em tempo real  
+- 🔄 integração leve com ferramentas corporativas  
 
+> 💡 O sistema foi projetado para funcionar **diretamente no campo**, com simplicidade, performance e confiabilidade.
 
-## Atualizações da versão
-- correção do menu lateral mobile em iOS e Android
-- campo Local agora mostra locais gerais + locais do projeto
-- refinamentos visuais para telas pequenas
+---
+
+## 🎯 Objetivo
+
+Substituir processos manuais e planilhas descentralizadas por uma solução digital:
+
+- estruturada  
+- auditável  
+- integrada  
+- escalável  
+
+---
+
+## 🧠 Arquitetura do Sistema
+
+```mermaid
+flowchart TD
+    A[Frontend - HTML/JS] --> B[Apps Script API]
+    B --> C[Google Sheets DB]
