@@ -216,10 +216,21 @@ header.brand-header {
   height: 36px;
   position: relative;
   z-index: 310;
+
+  /* 🔥 MOBILE FIX */
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+
+  /* 🔥 ESSENCIAL PARA IOS / ANDROID */
+  appearance: none;
+  -webkit-appearance: none;
+  user-select: none;
+
+  /* 🔥 GARANTE CLIQUE */
+  display: inline-flex;
 }
+
 .login-user-info:hover {
   background: var(--bg3);
   border-color: var(--border2);
