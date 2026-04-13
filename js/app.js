@@ -2145,3 +2145,78 @@ function gerarDataRegistroGoogle() {
   // Formata como: 2026-04-11 23:49:11
   return new Date().toISOString().replace('T', ' ').substring(0, 19);
 }
+
+
+
+// ════════════════════════════════════════════════════
+// MENU USUÁRIO / LOGOUT
+// ════════════════════════════════════════════════════
+function openLogoutMenu() {
+  const dropdown = document.getElementById('login-logout-menu');
+  const userBtn = document.getElementById('login-user-btn');
+  if (!dropdown || !userBtn) return;
+
+  const rect = userBtn.getBoundingClientRect();
+  dropdown.style.top = `${rect.bottom + 8}px`;
+  dropdown.style.right = '14px';
+  dropdown.style.left = 'auto';
+  dropdown.classList.add('open');
+}
+
+function closeLogoutMenu() {
+  const dropdown = document.getElementById('login-logout-menu');
+  if (!dropdown) return;
+  dropdown.classList.remove('open');
+}
+
+function toggleLogoutMenu(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  const dropdown = document.getElementById('login-logout-menu');
+  if (!dropdown) return;
+
+  if (dropdown.classList.contains('open')) {
+    closeLogoutMenu();
+  } else {
+    openLogoutMenu();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const userBtn = document.getElementById('login-user-btn');
+  const dropdown = document.getElementById('login-logout-menu');
+  const wrapper = document.querySelector('.login-user-wrapper');
+
+  if (!userBtn || !dropdown || !wrapper) {
+    console.warn('Menu de usuário não encontrado.');
+    return;
+  }
+
+  userBtn.addEventListener('click', toggleLogoutMenu);
+  userBtn.addEventListener('touchend', toggleLogoutMenu, { passive: false });
+
+  dropdown.addEventListener('click', function (e) {
+    e.stopPropagation();
+  });
+
+  dropdown.addEventListener('touchstart', function (e) {
+    e.stopPropagation();
+  }, { passive: true });
+
+  document.addEventListener('click', function (e) {
+    if (!wrapper.contains(e.target)) closeLogoutMenu();
+  });
+
+  document.addEventListener('touchstart', function (e) {
+    if (!wrapper.contains(e.target)) closeLogoutMenu();
+  }, { passive: true });
+
+  window.addEventListener('resize', function () {
+    if (dropdown.classList.contains('open')) {
+      openLogoutMenu();
+    }
+  });
+});
