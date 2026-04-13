@@ -1,4 +1,4 @@
-const CACHE_NAME = 'energold-github-pwa-v10';
+const CACHE_NAME = 'energold-github-pwa-v11';
 
 const FILES_TO_CACHE = [
   './',
@@ -40,25 +40,29 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
   const url = new URL(event.request.url);
 
-  // Não cachear Apps Script / API
-  if (url.hostname.includes('script.google.com') || url.hostname.includes('googleusercontent.com')) {
+  // ✅ FIX: Deixa TODAS as requisições não-GET passarem direto para a rede
+  // (antes o `return` sem respondWith causava cancelamento silencioso do POST)
+  if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
     return;
   }
 
+  // Não cachear Apps Script / API — vai direto para a rede
+  if (
+    url.hostname.includes('script.google.com') ||
+    url.hostname.includes('googleusercontent.com')
+  ) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Arquivos locais: cache first, fallback para rede
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-
-      return fetch(event.request)
-        .then(response => {
-          return response;
-        })
-        .catch(() => caches.match('./index.html'));
+      return fetch(event.request).catch(() => caches.match('./index.html'));
     })
   );
 });
