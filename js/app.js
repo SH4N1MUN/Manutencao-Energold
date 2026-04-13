@@ -608,8 +608,6 @@ async function enviarPendentesOS(){
     try{
       const googlePayload = {
         id: os.id,
-        data_registro: formatarDataRegistro(os.data_registro || new Date().toISOString().replace('T', ' ').substring(0, 19)),
-        updated_at: os.updated_at || new Date().toISOString(),
         projeto: os.projeto,
         cliente: os.cliente,
         local: os.local,
@@ -893,7 +891,6 @@ async function salvarOS(e){
   try{
     const googlePayload = {
       id: os.id,
-      data_registro: formatarDataRegistro(new Date().toISOString().replace('T', ' ').substring(0, 19)),
       projeto: os.projeto,
       cliente: os.cliente,
       local: os.local,
@@ -916,6 +913,10 @@ async function salvarOS(e){
       observacao: os.obs,
       assinada: os.assinada
     };
+    
+    if (os.data_registro) {
+  googlePayload.data_registro = os.data_registro;
+}
     const g = await apiPost('salvarOS', googlePayload);
     googleOk = !!(g && g.success);
     if(googleOk){
