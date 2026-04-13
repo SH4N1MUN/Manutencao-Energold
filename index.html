@@ -63,7 +63,7 @@
   <div class="logo-area">
     <button class="btn-menu" aria-label="Abrir menu" title="Abrir menu">☰</button>
     <img src="./assets/logo-energold.png" alt="Energold Drilling Brasil" class="brand-logo-header"
-         onerror="this.style.display='none'">
+         onerror="this.style.visibility='hidden';this.style.width='0'">
     <div class="brand-doc-meta">
       <div class="brand-system-title">Controle de Manutenção</div>
       <div class="brand-system-subtitle">Ordem de Serviço Modular · NBR 5462</div>
@@ -98,7 +98,7 @@
   <nav class="sidebar" role="navigation" aria-label="Menu de navegação" id="sidebar">
     <div class="sidebar-brand">
       <img src="./assets/logo-energold.png" alt="Energold Drilling Brasil" class="brand-logo-sidebar"
-           onerror="this.style.display='none'">
+           onerror="this.style.visibility='hidden';this.style.width='0'">
     </div>
 
     <div class="nav-section">Principal</div>
@@ -634,63 +634,36 @@
 <script src="./js/cadastros.js"></script>
 <script src="./js/ui.js"></script>
 
-<!-- Hook: injeta gráficos após renderDash -->
+<!-- Hook: gráficos do dashboard + badge nav -->
 <script>
-(function() {
-  // Patcha renderDash para chamar os gráficos do UIModule após render
-  const _origRenderDash = window.renderDash;
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Patch em renderDash — feito aqui pois app.js já carregou (scripts síncronos acima)
+  var _origRenderDash = window.renderDash;
   if (typeof _origRenderDash === 'function') {
     window.renderDash = function() {
       _origRenderDash.apply(this, arguments);
-      if (window.UIModule && typeof UIModule.renderDashCharts === 'function') {
-        try { UIModule.renderDashCharts(window.os_list || []); } catch(e) {}
-      }
+      try {
+        if (window.UIModule && typeof UIModule.renderDashCharts === 'function') {
+          UIModule.renderDashCharts(window.os_list || []);
+        }
+      } catch(e) { console.warn('UIModule chart error:', e); }
     };
   }
 
-  // Expõe hook para ser chamado depois do DOMContentLoaded se renderDash ainda não existia
-  document.addEventListener('DOMContentLoaded', function() {
-    // Garante que o logo da sidebar também aparece no login
+  // Badge de OS abertas no sidebar
+  function updateNavBadge() {
     try {
-      const sidebarLogo = document.querySelector('.brand-logo-sidebar');
-      const loginLogo   = document.getElementById('login-logo-img');
-      if (sidebarLogo && loginLogo && sidebarLogo.src) {
-        loginLogo.src = sidebarLogo.src;
-      }
-      // Tenta também com o logo do header
-      const headerLogo = document.querySelector('.brand-logo-header');
-      if (headerLogo && loginLogo && headerLogo.src && !loginLogo.src) {
-        loginLogo.src = headerLogo.src;
-      }
+      var badge = document.getElementById('nav-badge-abertas');
+      if (!badge) return;
+      var ab = (window.os_list || []).filter(function(o){ return o.status === 'Em Aberto'; }).length;
+      badge.textContent = ab > 0 ? ab : '';
+      badge.style.display = ab > 0 ? '' : 'none';
     } catch(e) {}
+  }
+  setInterval(updateNavBadge, 4000);
 
-    // Badge de OS abertas no nav
-    function updateNavBadge() {
-      try {
-        const badge = document.getElementById('nav-badge-abertas');
-        if (!badge || !window.os_list) return;
-        const ab = (window.os_list).filter(o => o.status === 'Em Aberto').length;
-        if (ab > 0) {
-          badge.textContent = ab;
-          badge.style.display = '';
-        } else {
-          badge.style.display = 'none';
-        }
-      } catch(e) {}
-    }
-
-    // Atualiza badge periodicamente
-    setInterval(updateNavBadge, 5000);
-
-    // Botão + Nova OS no header respeita permissão
-    document.addEventListener('eg:permissoes', function() {
-      const btnHeader = document.getElementById('btn-header-nova-os');
-      if (btnHeader && window.currentUser) {
-        btnHeader.style.display = window.currentUser.perms && window.currentUser.perms.criar ? '' : 'none';
-      }
-    });
-  });
-})();
+});
 </script>
 
 <!-- PWA Service Worker -->
