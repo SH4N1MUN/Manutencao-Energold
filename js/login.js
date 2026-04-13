@@ -1,9 +1,7 @@
 // ════════════════════════════════════════════════════
-// SISTEMA DE LOGIN — ENERGOLD v7
+// SISTEMA DE LOGIN — ENERGOLD v7 (fix: retry + timeout)
 // ════════════════════════════════════════════════════
 
-// Usuários do sistema (em produção, mova a validação para o servidor/Apps Script)
-// ════════════════════════════════════════════════════
 // AUTH — usuários gerenciados pelo Apps Script
 // A senha nunca trafega em texto puro: usamos SHA-256(usuario+senha+salt)
 // ════════════════════════════════════════════════════
@@ -13,6 +11,35 @@ let currentUser = null;
 async function sha256(texto) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── FETCH COM TIMEOUT ──────────────────────────────
+// O Apps Script tem "cold start" de até 8s na primeira chamada.
+// Esta função tenta até MAX_TENTATIVAS vezes antes de desistir.
+async function fetchComRetry(url, options, timeoutMs = 12000, maxTentativas = 3) {
+  let ultimoErro;
+  for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const resp = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timer);
+      return resp;
+    } catch (err) {
+      clearTimeout(timer);
+      ultimoErro = err;
+      if (tentativa < maxTentativas) {
+        // Atualiza o botão para mostrar que está tentando novamente
+        try {
+          const btn = document.getElementById('login-btn');
+          if (btn) btn.textContent = `Tentando novamente (${tentativa}/${maxTentativas})...`;
+        } catch(_) {}
+        // Espera 1.5s antes de tentar de novo (backoff leve)
+        await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+  }
+  throw ultimoErro;
 }
 
 async function initLogin() {
@@ -74,12 +101,13 @@ async function doLogin() {
     // SHA-256(usuario + senha + salt) — senha nunca trafega em texto puro
     const hash = await sha256(usuario + senha + 'energold-salt-2026');
 
-    // Valida contra o Apps Script (aba Usuarios na planilha)
-    const resp = await fetch(API_URL, {
+    // ── FETCH COM RETRY (resolve o cold start do Apps Script) ──
+    const resp = await fetchComRetry(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'login', data: { usuario, hash } })
-    });
+    }, 12000, 3);
+
     const r = await resp.json();
 
     if (r && r.success) {
@@ -106,7 +134,18 @@ async function doLogin() {
       document.getElementById('login-user').focus();
     }
   } catch(err) {
-    errEl.textContent = 'Erro de conexão. Verifique sua internet.';
+    // Distingue erro de rede de erro de credenciais
+    const isAbort = err && (err.name === 'AbortError' || err.name === 'TimeoutError');
+    const isOffline = !navigator.onLine;
+
+    if (isOffline) {
+      errEl.textContent = 'Sem conexão com a internet. Verifique sua rede.';
+    } else if (isAbort) {
+      errEl.textContent = 'O servidor demorou para responder. Tente novamente.';
+    } else {
+      errEl.textContent = 'Falha ao conectar ao servidor. Tente novamente em instantes.';
+    }
+
     errEl.classList.add('show');
     btn.disabled = false;
     btn.textContent = 'Entrar';
