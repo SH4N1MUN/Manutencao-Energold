@@ -6,7 +6,7 @@
 header.brand-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 200;
   height: 72px;
   display: flex;
   align-items: center;
@@ -26,6 +26,8 @@ header.brand-header {
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 210;
 }
 
 .btn-menu {
@@ -45,6 +47,8 @@ header.brand-header {
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  position: relative;
+  z-index: 220;
 }
 .btn-menu:hover { background: rgba(3,106,171,0.13); }
 .btn-menu:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(3,106,171,.18); border-radius: var(--r); }
@@ -90,6 +94,8 @@ header.brand-header {
   flex-wrap: nowrap;
   justify-content: flex-end;
   margin-left: auto;
+  position: relative;
+  z-index: 220;
 }
 
 /* Sync area */
@@ -103,6 +109,8 @@ header.brand-header {
   border-radius: 999px;
   background: rgba(255,255,255,0.95);
   white-space: nowrap;
+  position: relative;
+  z-index: 220;
 }
 
 .v4-status {
@@ -163,12 +171,17 @@ header.brand-header {
   font-size: 12px;
   transition: background var(--tr), transform var(--tr);
   white-space: nowrap;
+  position: relative;
+  z-index: 220;
 }
 .v4-sync-btn:hover    { background: #1d4ed8; transform: translateY(-1px); }
 .v4-sync-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
 /* User badge */
-.login-user-wrapper { position: relative; }
+.login-user-wrapper {
+  position: relative;
+  z-index: 300;
+}
 
 .login-user-info {
   display: flex;
@@ -184,6 +197,11 @@ header.brand-header {
   cursor: pointer;
   transition: background var(--tr), border-color var(--tr);
   height: 36px;
+  position: relative;
+  z-index: 310;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .login-user-info:hover { background: var(--bg3); border-color: var(--border2); }
 
@@ -318,6 +336,7 @@ header.brand-header {
   background: var(--teal3);
   border-radius: 2px 0 0 2px;
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .nav-icon {
@@ -434,7 +453,23 @@ header.brand-header {
 }
 
 /* ── Z-INDEX STACK ── */
-.main, .modal, .card, header, .sidebar, .toast { position: relative; z-index: 2; }
+.main,
+.modal,
+.card,
+.sidebar,
+.toast {
+  position: relative;
+  z-index: 2;
+}
+
+/* Blindagem contra elementos decorativos capturando clique */
+.card::before,
+.card::after,
+.sidebar::before,
+header.brand-header::before,
+header.brand-header::after {
+  pointer-events: none;
+}
 
 /* ── EDIT REFRESH ALERT ── */
 .edit-refresh-alert {
