@@ -2208,39 +2208,59 @@ function toggleLogoutMenu(e) {
 document.addEventListener('DOMContentLoaded', function () {
   const userBtn = document.getElementById('login-user-badge');
   const dropdown = document.getElementById('login-logout-menu');
-  const wrapper = document.querySelector('.login-user-wrapper');
+  const wrapper = document.getElementById('login-user-wrapper');
+  const logoutBtn = document.getElementById('logout-action');
 
   if (!userBtn || !dropdown || !wrapper) {
     console.warn('Menu de usuário não encontrado.');
     return;
   }
 
-  // clique desktop + mobile
-  userBtn.addEventListener('click', toggleLogoutMenu);
-  userBtn.addEventListener('touchend', toggleLogoutMenu, { passive: false });
+  // evita bind duplicado
+  if (!userBtn.dataset.boundMenu) {
+    userBtn.dataset.boundMenu = '1';
 
-  // impedir fechamento ao clicar dentro do menu
-  dropdown.addEventListener('click', function (e) {
-    e.stopPropagation();
-  });
+    // usa pointerup para desktop + mobile
+    userBtn.addEventListener('pointerup', function (e) {
+      toggleLogoutMenu(e);
+    });
 
-  dropdown.addEventListener('touchstart', function (e) {
-    e.stopPropagation();
-  }, { passive: true });
+    // impede fechar ao tocar dentro do menu
+    dropdown.addEventListener('pointerup', function (e) {
+      e.stopPropagation();
+    });
 
-  // fechar ao clicar fora
-  document.addEventListener('click', function (e) {
-    if (!wrapper.contains(e.target)) closeLogoutMenu();
-  });
+    // fecha ao tocar fora
+    document.addEventListener('pointerup', function (e) {
+      if (!wrapper.contains(e.target)) {
+        closeLogoutMenu();
+      }
+    });
 
-  document.addEventListener('touchstart', function (e) {
-    if (!wrapper.contains(e.target)) closeLogoutMenu();
-  }, { passive: true });
+    // reposiciona se necessário
+    window.addEventListener('resize', function () {
+      if (dropdown.classList.contains('open')) {
+        openLogoutMenu();
+      }
+    });
+  }
 
-  // reposicionar ao redimensionar
-  window.addEventListener('resize', function () {
-    if (dropdown.classList.contains('open')) {
-      openLogoutMenu();
-    }
-  });
+  // botão sair
+  if (logoutBtn && !logoutBtn.dataset.boundLogout) {
+    logoutBtn.dataset.boundLogout = '1';
+
+    logoutBtn.addEventListener('pointerup', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeLogoutMenu();
+
+      if (typeof logout === 'function') {
+        logout();
+      } else if (typeof doLogout === 'function') {
+        doLogout();
+      } else {
+        console.error('Função logout()/doLogout() não encontrada.');
+      }
+    });
+  }
 });
