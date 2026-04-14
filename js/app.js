@@ -2010,6 +2010,64 @@ function tipoBadge(t){
         : 'b-preventiva';
   return `<span class="badge ${cls}">${t||'—'}</span>`;
 }
+
+// ════════════════════════════════════════════════════
+// SLA — 24h entre abertura e fechamento
+// ════════════════════════════════════════════════════
+const SLA_HORAS = 24;
+
+function calcSLA(os) {
+  const inicio = parseDateLocal(os.inicio);
+  if (!inicio || isNaN(inicio)) return null;
+
+  const concluida = os.status === 'Concluído' || os.status === 'Cancelado';
+  let fim;
+  if (concluida && os.termino) {
+    fim = parseDateLocal(os.termino);
+    if (!fim || isNaN(fim)) fim = new Date();
+  } else {
+    fim = new Date();
+  }
+
+  const decorrH = (fim - inicio) / 3600000;
+  const pct     = Math.min((decorrH / SLA_HORAS) * 100, 100);
+  const restH   = SLA_HORAS - decorrH;
+  const vencido = decorrH > SLA_HORAS;
+  return { decorrH, pct, restH, vencido, concluida };
+}
+
+function slaBadge(os) {
+  const s = calcSLA(os);
+  if (!s) return '<span style="opacity:.35;font-size:11px">—</span>';
+
+  const cor = s.vencido
+    ? '#E03E3E'
+    : s.pct >= 75 ? '#F59E0B' : '#12B76A';
+  const bgCor = s.vencido
+    ? 'rgba(224,62,62,.12)'
+    : s.pct >= 75 ? 'rgba(245,158,11,.12)' : 'rgba(18,183,106,.12)';
+
+  let txt;
+  if (s.vencido) {
+    const over = s.decorrH - SLA_HORAS;
+    const overTxt = over >= 24 ? `+${(over/24).toFixed(1)}d` : `+${over.toFixed(1)}h`;
+    txt = `<span style="color:${cor};font-weight:700">VENCIDO ${overTxt}</span>`;
+  } else if (s.concluida) {
+    txt = `<span style="color:${cor}">${s.decorrH.toFixed(1)}h / ${SLA_HORAS}h</span>`;
+  } else {
+    const r = s.restH;
+    const restTxt = r >= 1 ? `${r.toFixed(1)}h restantes` : `${Math.round(r*60)}min restantes`;
+    txt = `<span style="color:${cor}">${restTxt}</span>`;
+  }
+
+  return `<div class="sla-wrap">
+    <div class="sla-bar-bg" style="background:${bgCor}">
+      <div class="sla-bar-fill" style="width:${s.pct.toFixed(1)}%;background:${cor}"></div>
+    </div>
+    <div class="sla-txt">${txt}</div>
+  </div>`;
+}
+
 // ════════════════════════════════════════════════════
 // PARSER DE DATA LOCAL — evita conversão UTC→local
 // Aceita: "DD/MM/YYYY HH:mm:ss", "YYYY-MM-DD HH:mm:ss",
