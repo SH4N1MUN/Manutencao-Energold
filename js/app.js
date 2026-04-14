@@ -1,112 +1,32 @@
 // ════════════════════════════════════════════════════
-// DADOS DE REFERÊNCIA — extraídos da planilha
+// REF — fallback mínimo para sincronizarPerfisNaOS()
+// Equipamentos, projetos, locais, sistemas e componentes
+// vêm 100% do remoteCadastros (Google Sheets, cacheado
+// no localStorage na primeira conexão).
+// Mecanicos/sondadores são mantidos aqui apenas como
+// base inicial para mescla com os perfis cadastrados.
 // ════════════════════════════════════════════════════
 const REF = {
-  equipamentos: [
-    {tag:551,nome:'EGD551 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:549,nome:'EGD549 - RANGER S4 V2',modelo:'RANGER S4 v2'},
-    {tag:547,nome:'EGD547 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:203,nome:'EGD203 - PERSEUS',modelo:'PERSEUS'},
-    {tag:550,nome:'EGD550 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:537,nome:'EGD537 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:512,nome:'EGD512 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:546,nome:'EGD546 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:204,nome:'EGD204 - RANGER S3 V1.5',modelo:'RANGER S3 v1.5'},
-    {tag:548,nome:'EGD548 - RANGER S3 V1.5',modelo:'RANGER S3 v1.5'},
-    {tag:721,nome:'EGD721 - CS1000',modelo:'CS1000'},
-    {tag:259,nome:'EGD259 - RANGER S3-e UG',modelo:'RANGER S3-e UG'},
-    {tag:617,nome:'EGD617 - RANGER S3 V1',modelo:'RANGER S3 v1'},
-    {tag:257,nome:'EGD257 - RANGER S3 V1',modelo:'RANGER S3 v1'},
-    {tag:552,nome:'EGD552 - RANGER S4 V1',modelo:'RANGER S4 v1'},
-    {tag:535,nome:'EGD535 - RANGER S3 V1.5',modelo:'RANGER S3 v1.5'},
-    {tag:265,nome:'EGD265 - RANGER S3 V1.5',modelo:'RANGER S3 v1.5'},
-    {tag:262,nome:'EGD262 - RANGER S3 V1',modelo:'RANGER S3 v1'},
-    {tag:251,nome:'EGD251 - RANGER S3 V1',modelo:'RANGER S3 v1'},
-    {tag:261,nome:'EGD261 - RANGER S3 V1',modelo:'RANGER S3 v1'},
-    {tag:510,nome:'EGD510 - RANGER S3 V2',modelo:'RANGER S3 v2'},
-    {tag:850,nome:'EGD850 - TITAN RC',modelo:'TITAN'},
-    {tag:711,nome:'EGD711 - CS1000',modelo:'CS1000'},
-    {tag:720,nome:'EGD720 - CS1000',modelo:'CS1000'},
-  ],
-  projetos: [
-    {id:'ENERGOLD',nome:'Sem Alocação Específica',cliente:'ENERGOLD'},
-    {id:'1509-VALE_SU',nome:'Vale Sul',cliente:'VALE'},
-    {id:'1509-VALE_SD',nome:'Vale Sudeste',cliente:'VALE'},
-    {id:'1522-MDB',nome:'Mineral do Brasil',cliente:'MINERAL DO BRASIL'},
-    {id:'1536-M4E',nome:'M4E',cliente:'M4E'},
-    {id:'1537-AGA',nome:'AngloGold Ashanti',cliente:'ANGLOGOLD ASHANTI'},
-    {id:'1538-EQUINOX',nome:'Equinox Gold',cliente:'EQUINOX GOLD'},
-    {id:'1534-ST GEORGE',nome:'St George',cliente:'ST GEORGE'},
-    {id:'1523-PLS',nome:'PLS',cliente:'PLS'},
-    {id:'1513-BORBOREMA',nome:'Borborema',cliente:'BORBOREMA'},
-    {id:'1539-VIRIDIS',nome:'Viridis',cliente:'VIRIDIS'},
-  ],
-  locais: [
-    'Mina CPX','Mina de Horizontes','Mina de Brucutu','Mina de Tamanduá',
-    'Ponte de Arame','Mina de Viga','Concessões Norte','Araxá','Araçuaí',
-    'Jitaúna','Mina Cuiabá','Mina Franceses','Salinas','Condomínio',
-    'MAC','Cianita','Peneirinha','Mina Monte Alto','FOG\'s','Mina de Teixeirinha',
-    'Mina de Formigueiro','Mina CDN','Colina','Lajinha','Gerais','Fzd Br',
-    'Self-Storage','Mina de Gongo Soco','Oficina',
-  ],
-  sistemas: [
-    'Básico Estrutural',
-    'Sistema Elétrico',
-    'Unidade de Potência',
-    'Tanque Hidráulico',
-    'Sistema de Resfriamento',
-    'Sistema de Controle',
-    'Bomba de Lama',
-    'Mud Mixer',
-    'Unidade de Perfuração',
-    'Grade de Proteção',
-  ],
-  componentesPorSistema: {
-    'Básico Estrutural':['Chassi','Base da sonda','Mastro / torre','Mesa / plataforma','Patolas','Esteiras / rodado','Passadiço','Suporte estrutural','Pontos de fixação'],
-    'Sistema Elétrico':['Painel elétrico','Chicote elétrico','Sensores','Botoeira de emergência','Iluminação','Bateria','Alternador','Motor de partida','Relés e fusíveis'],
-    'Unidade de Potência':['Motor diesel','Sistema de admissão','Sistema de exaustão','Sistema de combustível','Lubrificação do motor','Acoplamento','Correias e polias','Coxins','Tomada de força'],
-    'Tanque Hidráulico':['Reservatório','Tampa / respiro','Filtro de retorno','Filtro de sucção','Visor de nível','Mangueiras','Conexões','Válvulas','Suportes'],
-    'Sistema de Resfriamento':['Radiador','Ventoinha','Bomba d\'água','Mangueiras','Abraçadeiras','Trocador de calor','Reservatório de expansão','Termostato'],
-    'Sistema de Controle':['Comando hidráulico','Joysticks / alavancas','Painel de comandos','CLP / módulos','Válvulas de controle','Intertravamentos','Instrumentação','Display / indicadores'],
-    'Bomba de Lama':['Corpo da bomba','Cabeçote','Camisa','Pistão','Válvulas','Selo','Mangueiras','Conexões','Motor / acionamento'],
-    'Mud Mixer':['Tanque','Agitador','Motor do agitador','Redutor','Tubulação','Registro / válvula','Estrutura','Mangueiras'],
-    'Unidade de Perfuração':['Top drive / cabeçote','Motor de rotação','Caixa de marchas','Mandril','Morsa','Morsa dupla','Footclamp','Guincho','Cilindro de avanço','Cabeça d\'água','Stinger','Sardinha'],
-    'Grade de Proteção':['Tela','Porta','Fecho','Dobradiça','Suportes','Fixações','Intertravamento'],
-  },
-  modosFalha: [
-    'Preventiva 100 Horas','Preventiva 200 Horas','Preventiva 250 Horas',
-    'Preventiva 400 Horas','Preventiva 500 Horas','Preventiva 600 Horas',
-    'Preventiva 750 Horas','Preventiva 800 Horas','Preventiva 1000 Horas',
-    'Preventiva 2000 Horas','Falta de Componente','Lubrificação','Perda de Pressão',
-    'Falha Mecânica','Quebra de Componente','Pane elétrica','Sem informações',
-    'Superaquecimento','Vazamento','Instalação de Componente','Contaminação',
-  ],
-  causasRaiz: ['Falta de Lubrificação','Em Análise'],
-  efeitos: ['Perda de Pressão','Parada de Máquina','Em Análise'],
   mecanicos: [
-    'Eustáquio Martins','Kleber Valadares','Adriano Bispo','Adriano da Cunha',
-    'Aldenício','Gabriel','Hugo Fróes','Jadson','Jean Paulo','Júlio Braga',
-    'Erick Jonathan','Leandro Alves','Perseu Soares','Gustavo Campolina',
-    'Leonardo Nascimento','Jean Paulo','Rodrigo Freire','Expedito Cândido',
-    'Marlon Lúcio','Jocimar Silva','Dayvid Magalhães','Jocimar','Leandro',
-    'Henrique Campos','Henrique Marques','Gilson Miranda','Flavio Gonçalves',
-    'Ramiro Coelho','Wanderson Farley','Elismar Guedes','João Pedro','Adriano Bispo',
+    'Dayvid Magalhães','Erick Jonathan','Eustáquio Martins',
+    'Expedito Cândido','Jocimar Silva','Júlio Braga',
+    'Kleber Valadares','Leandro Alves','Leonardo Nascimento',
+    'Marcos Paulo','Marlon Lúcio','Ramon Nunes','Rodrigo Freire',
   ].filter((v,i,a)=>a.indexOf(v)===i).sort(),
   sondadores: [
-    'Ramiro Coelho','Maurício Ribeiro','Elismar Guedes','Emanuel Gomes',
-    'Mauricio Santos','Felipe Cardoso','Brenner Rafael','Wellington Amancio',
-    'Alan Meireles','Cassio Amancio','Anderson Flores','Joelson Santos',
-    'Jusseilton Moura','Joelson Joel','Anderson Brito','Olair Teixeira',
-    'Abraão G','Welington Francisco','Salomão Lucas','Frances de Souza',
-    'Robson Moreira','Ivanilson Nunes','Antônio Nazareno','Luiz Antonio',
-    'Jonas Brito','Mateus Teixeira','Paulo Geovane','Lucas Gomes',
-    'Fabio Henrique','Egberto Junior','Wesley Roberto','Fabricio Junior',
-    'Leandro Oliveira','Gilson Miranda','Genisson Thales','João Pedro',
-    'Henrique Teixeira','Josimar das Neves','Flavio Gonçalves','Elivan Belarmino',
-    'Cleiton Matos','Eugenio Madureira','Thales Henrique','Geraldo Magella',
-    'Guilherme Assunção','Wanderson Santos','Wanderson Farley',
+    'Abraão G','Alan Meireles','Anderson Brito','Antônio Nazareno',
+    'Brenner Rafael','Egberto Junior','Elivan Belarmino',
+    'Elismar Guedes','Emanuel Gomes','Fabricio Junior',
+    'Fabio Henrique','Felipe Cardoso','Flavio Gonçalves',
+    'Genisson Thales','Gilson Miranda','Henrique Teixeira',
+    'Ivanilson Nunes','João Pedro','Joelson Joel','Jonas Brito',
+    'Jusseilton Moura','Leandro Oliveira','Lucas Gomes',
+    'Luiz Antonio','Mateus Teixeira','Olair Teixeira',
+    'Paulo Geovane','Ramiro Coelho','Thales Henrique',
+    'Wanderson Farley','Wesley Roberto',
   ].filter((v,i,a)=>a.indexOf(v)===i).sort(),
 };
+
 
 // ════════════════════════════════════════════════════
 // GOOGLE SHEETS
@@ -156,12 +76,7 @@ if(remoteCadastros && Array.isArray(remoteCadastros.linhasProjeto) && remoteCada
     }));
 }
 
-  return (REF.projetos || [])
-  .filter(p => String((p && p.id) || '').trim() === codigo)
-  .map(p => ({
-    projeto: String((p && p.id) || '').trim(),
-    cliente: String((p && p.cliente) || '').trim()
-  }));
+  return []; // remoteCadastros não carregado ainda
 }
 
 function getProjetosFonte(){
@@ -176,7 +91,7 @@ function getProjetosFonte(){
     return uniqueSorted(remoteCadastros.projetos).map(p => ({ id:p, nome:p }));
   }
 
-  return (REF.projetos || []).map(p => ({ id:p.id, nome:p.nome || p.id }));
+  return []; // remoteCadastros não carregado ainda
 }
 
 function getClienteFromProjeto(projeto){
@@ -184,12 +99,11 @@ function getClienteFromProjeto(projeto){
   const clientes = uniqueSorted(rows.map(r => r.cliente));
   if(clientes.length) return clientes[0];
 
-  const ref = (REF.projetos || []).find(p => String((p && p.id) || '').trim() === String(projeto || '').trim());
-  return ref && ref.cliente ? String(ref.cliente).trim() : '';
+  return ''; // remoteCadastros não carregado ainda
 }
 
 function getLocaisFromProjeto(projeto){
-  return remoteOrLocal('locais', REF.locais);
+  return remoteOrLocal('locais', []);
 }
 
 function getEquipamentosFonte(){
@@ -205,7 +119,7 @@ function getEquipamentosFonte(){
     }));
   }
 
-  return REF.equipamentos || [];
+  return []; // remoteCadastros não carregado ainda
 }
 
 async function carregarCadastrosGoogle(){
@@ -240,7 +154,7 @@ function getSistemasFonte(){
     return remoteCadastros.sistemas;
   }
 
-  return REF.sistemas || [];
+  return []; // remoteCadastros não carregado ainda
 }
 
 function getComponentesPorSistemaFonte(sistema){
@@ -252,7 +166,7 @@ function getComponentesPorSistemaFonte(sistema){
     return remoteCadastros.componentesPorSistema[sistema];
   }
 
-  return (REF.componentesPorSistema && REF.componentesPorSistema[sistema]) || [];
+  return []; // remoteCadastros não carregado ainda
 }
 
 function toInputDateTimeValue(value){
@@ -1808,12 +1722,12 @@ function renderPerfis(){
 function populatePerfilSelects(){
   const projetosFonte = (remoteCadastros && Array.isArray(remoteCadastros.projetos) && remoteCadastros.projetos.length)
     ? remoteCadastros.projetos
-    : REF.projetos.map(p=>p.id);
+    : [];
   const projSel = document.getElementById('pf-projeto');
   projSel.innerHTML = '<option value="">— Sem alocação —</option>' +
     projetosFonte.map(p=>`<option value="${p}">${p}</option>`).join('');
 
-  const locaisFonte = remoteOrLocal('locais', REF.locais);
+  const locaisFonte = remoteOrLocal('locais', []);
   const locSel = document.getElementById('pf-local');
   locSel.innerHTML = '<option value="">— Selecione —</option>' +
     locaisFonte.map(l=>`<option value="${l}">${l}</option>`).join('');
