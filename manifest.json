@@ -1,22 +1,43 @@
 {
   "name": "ENERGOLD - Controle de Manutenção",
   "short_name": "ENERGOLD",
+  "description": "Sistema de controle de Ordens de Serviço de manutenção - ENERGOLD Drilling Brasil",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F3F8FC",
-  "theme_color": "#036AAB",
-  "orientation": "portrait",
+  "background_color": "#F5F7FA",
+  "theme_color": "#0762C8",
+  "orientation": "any",
+  "lang": "pt-BR",
+  "categories": ["productivity", "utilities"],
   "icons": [
     {
       "src": "./assets/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "./assets/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nova OS",
+      "short_name": "Nova OS",
+      "description": "Criar nova Ordem de Serviço",
+      "url": "./index.html#nova-os",
+      "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "OS Lançadas",
+      "short_name": "Lista OS",
+      "description": "Ver Ordens de Serviço lançadas",
+      "url": "./index.html#lista-os",
+      "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
