@@ -225,6 +225,48 @@ tr:hover td {
   cursor: pointer;
 }
 
+/* ════════════════════════════════════════
+   TABELA DO DASHBOARD — compacta
+   Fonte e padding menores para caber
+   12 colunas sem overflow horizontal
+════════════════════════════════════════ */
+#dash-table th,
+#dash-table td {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+/* Cabeçalho ainda menor */
+#dash-table th {
+  font-size: 10px;
+  padding: 8px 10px;
+}
+
+/* Coluna Módulo/Componente: quebra texto em vez de overflow */
+#dash-table td:nth-child(4) {
+  max-width: 150px;
+  white-space: normal;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+/* Colunas de data: fonte reduzida, não quebra */
+#dash-table td:nth-child(8),
+#dash-table td:nth-child(9) {
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* Registrado / Fechado: fonte discreta, sem quebra */
+#dash-table td:nth-child(11),
+#dash-table td:nth-child(12) {
+  font-size: 11.5px;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .os-num {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
