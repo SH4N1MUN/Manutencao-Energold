@@ -1064,6 +1064,7 @@ function renderDash(){
     tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
     return;
   }
+  // Dashboard: 10 colunas (sem "Registrado por"/"Fechado por" — disponíveis no modal)
   tbody.innerHTML = recentes.map(o=>`<tr onclick="verOS('${o.id}')">
     <td><span class="os-num">${o.numero}</span></td>
     <td>${o.tag}</td>
@@ -1073,10 +1074,8 @@ function renderDash(){
     <td>${tipoBadge(o.tipo)}</td>
     <td>${statusBadge(o.status)}</td>
     <td>${fmtDT(o.inicio)}</td>
-    <td>${fmtDT(o.termino)||'<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
+    <td>${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
     <td>${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
-    <td style="font-size:12px;color:var(--steel)">${o.registrado_por||'—'}</td>
-    <td style="font-size:12px;color:${o.fechado_por?'var(--green)':'var(--steel)'}">${o.fechado_por||'—'}</td>
   </tr>`).join('');
 }
 
