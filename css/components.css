@@ -668,3 +668,33 @@ textarea        { resize: vertical; min-height: 72px; }
 .login-logout-item:hover         { background: var(--bg3); }
 .login-logout-item.danger        { color: var(--red); }
 .login-logout-item.danger:hover  { background: var(--red-bg); }
+/* ════════════════════════════════════════
+   SLA — barra de progresso + texto
+   Verde (0–74%) → Amarelo (75–99%) → Vermelho (100%+)
+════════════════════════════════════════ */
+.sla-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 110px;
+}
+
+.sla-bar-bg {
+  height: 5px;
+  border-radius: 999px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.sla-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+
+.sla-txt {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
