@@ -1,186 +1,535 @@
-/* ════════════════════════════════════════
-   TELA DE LOGIN
-════════════════════════════════════════ */
-#login-screen {
-  display: flex;
+/* ════════════════════════════════════════════════════
+   RESPONSIVE.CSS — ENERGOLD v8 · Mobile-First
+   Autor revisão: Claude (Anthropic) — Abril 2026
+   
+   ATENÇÃO: O arquivo anterior era uma cópia acidental
+   do login.css sem nenhum breakpoint real. Este arquivo
+   substitui com breakpoints mobile-first completos.
+════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════
+   1. VARIÁVEIS MOBILE / SAFE AREA
+══════════════════════════════════════ */
+:root {
+  /* Garante que safe-area do iPhone seja respeitada */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+
+  /* Altura mínima para toque confortável (WCAG 44px) */
+  --touch-min: 44px;
+
+  /* Velocidade de transição sidebar */
+  --sidebar-transition: 260ms cubic-bezier(.22,.68,0,1.2);
+}
+
+/* ══════════════════════════════════════
+   2. BODY / HTML — problemas de vh no mobile
+══════════════════════════════════════ */
+
+/* Evita zoom automático no iOS em inputs (font-size ≥ 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important; /* Previne zoom no iOS */
+  }
+}
+
+/* Remove delay de 300ms em cliques no mobile */
+html {
+  touch-action: manipulation;
+}
+
+/* Evita scroll horizontal em toda a página */
+body {
+  overflow-x: hidden;
+  /* Padding para notch/safe-area no iOS */
+  padding-top:    var(--safe-top);
+  padding-left:   var(--safe-left);
+  padding-right:  var(--safe-right);
+}
+
+/* ══════════════════════════════════════
+   3. HEADER — correções mobile
+══════════════════════════════════════ */
+
+/* O btn-menu (hamburguer) fica oculto no desktop,
+   visível somente abaixo de 768px */
+.btn-menu {
+  display: none;
+}
+
+/* ══════════════════════════════════════
+   4. DEV FOOTER — precisa saber a largura
+   da sidebar para posicionar corretamente
+══════════════════════════════════════ */
+.dev-footer {
+  padding-bottom: calc(8px + var(--safe-bottom));
+}
+
+/* ══════════════════════════════════════
+   5. OVERLAY DA SIDEBAR MOBILE
+   (Fundo escuro ao abrir menu no celular)
+══════════════════════════════════════ */
+.sidebar-overlay {
+  display: none;
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  overflow: hidden;
+  background: rgba(11, 30, 61, 0.55);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: fadeIn .2s ease both;
+}
+.sidebar-overlay.open {
+  display: block;
 }
 
-#login-screen.hidden { display: none; }
+/* ══════════════════════════════════════
+   6. BREAKPOINT ≤ 1024px — tablet / iPad
+══════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .main {
+    padding: 20px 20px 72px;
+  }
 
-/* ── Fundo com gradiente e padrão geométrico ── */
-.login-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 100% 80% at 0% 0%,   rgba(7,98,200,.12) 0%,  transparent 55%),
-    radial-gradient(ellipse 80%  70% at 100% 100%, rgba(11,30,61,.08) 0%,  transparent 60%),
-    radial-gradient(ellipse 60%  50% at 50% 50%,  rgba(240,106,0,.04) 0%, transparent 70%),
-    #F5F7FA;
-  z-index: 0;
+  /* Reduz padding da sidebar */
+  .sidebar {
+    width: 200px;
+    min-width: 200px;
+  }
+
+  .dev-footer {
+    left: 200px;
+  }
+
+  /* Grid de formulário: 3→2 colunas */
+  .fg4 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Grid detalhe modal: 3→2 colunas */
+  .dg3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Perfis: painel lateral some, tela cheia */
+  #perfis-layout {
+    grid-template-columns: 1fr !important;
+  }
 }
 
-/* Padrão de pontos decorativos */
-.login-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(7,98,200,.06) 1px, transparent 1px);
-  background-size: 32px 32px;
-  z-index: 0;
+/* ══════════════════════════════════════
+   7. BREAKPOINT ≤ 768px — mobile / tablet pequeno
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── HEADER ── */
+  header.brand-header {
+    height: 56px;
+    padding: 0 14px 0 12px;
+    /* Garante que o header fique sobre o conteúdo com safe-area */
+    padding-top: var(--safe-top);
+    height: calc(56px + var(--safe-top));
+  }
+
+  .btn-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 20px;
+    padding: 0;
+    border-radius: var(--r);
+    /* Touch target mínimo */
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+  }
+
+  /* Textos do header: ocultar subtítulo para economizar espaço */
+  .brand-system-subtitle {
+    display: none;
+  }
+
+  /* Reduz tamanho do logo */
+  .brand-logo-header {
+    height: 28px;
+  }
+
+  /* Área direita do header */
+  .header-right {
+    gap: 6px;
+  }
+
+  /* Esconde "Nova OS" no header no mobile (existe no menu) */
+  .header-right > .btn-teal:first-child {
+    display: none;
+  }
+
+  /* Barra de sincronização: compacta */
+  .v4-sync-area {
+    padding: 4px 10px;
+    gap: 7px;
+  }
+  .v4-sync-hora {
+    display: none; /* Economiza espaço no mobile */
+  }
+  .v4-sync-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  /* Badge de usuário: só iniciais */
+  #login-user-name {
+    display: none;
+  }
+  .login-user-info {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  /* ── LAYOUT APP ── */
+  .app {
+    min-height: calc(100dvh - 56px); /* dvh resolve problema do safari */
+  }
+
+  /* ── SIDEBAR MOBILE — drawer lateral ── */
+  .sidebar {
+    position: fixed;
+    top: calc(56px + var(--safe-top));
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    min-width: 260px;
+    height: auto;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform var(--sidebar-transition);
+    /* Safe area esquerda */
+    padding-left: var(--safe-left);
+    /* Permite scroll interno */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 4px 0 24px rgba(11,30,61,.25);
+  }
+
+  /* Estado aberto da sidebar */
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* ── MAIN — ocupa tela toda ── */
+  .main {
+    padding: 16px 14px 80px; /* padding bottom generoso para o footer fixo */
+    width: 100%;
+    min-height: calc(100dvh - 56px);
+  }
+
+  /* ── DEV FOOTER ── */
+  .dev-footer {
+    left: 0;
+    padding-bottom: calc(6px + var(--safe-bottom));
+  }
+
+  /* ── PAGE TITLE ── */
+  .page-title {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  .page-title small {
+    display: none; /* Oculta subtítulo no mobile para não comprimir */
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    padding: 14px 14px 12px;
+  }
+  .stat-val {
+    font-size: 22px;
+  }
+
+  /* ── CARDS ── */
+  .card-hd {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-bd {
+    padding: 14px;
+  }
+
+  /* ── TABELAS → scroll horizontal ── */
+  .tbl-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Indica visualmente que há mais conteúdo */
+    background:
+      linear-gradient(to right, white 30%, rgba(255,255,255,0)),
+      linear-gradient(to right, rgba(255,255,255,0), white 70%) 0 100%,
+      radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,.08), transparent),
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.08), transparent) 0 100%;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  table {
+    min-width: 700px; /* Garante que a tabela não fique espremida */
+  }
+
+  th, td {
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+
+  /* ── SEARCH BAR ── */
+  .search-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  /* Input de busca ocupa linha inteira */
+  .search-bar input[type="text"]:first-child {
+    grid-column: 1 / -1;
+  }
+  /* Botões de ação na última linha */
+  .search-bar .btn {
+    min-height: var(--touch-min);
+  }
+  /* Remove max-width que restringia inputs no mobile */
+  .search-bar input,
+  .search-bar select {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+  /* Filtros de data em linha própria */
+  #s-data-de, #s-data-ate {
+    max-width: none !important;
+    grid-column: 1;
+  }
+
+  /* ── FORMULÁRIOS ── */
+  .fg  { grid-template-columns: 1fr; }
+  .fg3 { grid-template-columns: 1fr; }
+  .fg4 { grid-template-columns: 1fr; }
+
+  /* Garante que campos de formulário tenham altura mínima para toque */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    min-height: var(--touch-min);
+    padding: 10px 12px;
+  }
+
+  /* Aumenta checkbox para toque confortável */
+  input[type="checkbox"] {
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px;
+    min-height: 22px;
+  }
+
+  /* Botões do formulário */
+  .btn {
+    min-height: var(--touch-min);
+    padding: 10px 18px;
+  }
+  .btn-sm { min-height: 36px; }
+  .btn-xs { min-height: 32px; padding: 6px 10px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end; /* Modal vem de baixo no mobile */
+  }
+  .modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: var(--r-xl) var(--r-xl) 0 0; /* Só arredonda em cima */
+    margin: 0;
+    max-height: 92dvh;
+    display: flex;
+    flex-direction: column;
+    /* Safe area inferior */
+    padding-bottom: var(--safe-bottom);
+  }
+  .modal-hd {
+    padding: 16px 16px 12px;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .modal-bd {
+    padding: 16px;
+    max-height: none;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Grids do modal viram coluna única */
+  .dg, .dg3 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  /* Botões de ação no modal */
+  .modal-hd .btn {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .close-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  /* ── PERFIS ── */
+  #perfis-layout {
+    grid-template-columns: 1fr !important;
+  }
+  #perfil-form-panel {
+    order: -1; /* Formulário aparece primeiro no mobile */
+  }
+  .perfil-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .perm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── SYNC STATUS ── */
+  .v4-sync-area {
+    font-size: 11px;
+  }
+
+  /* ── EDIT REFRESH ALERT ── */
+  .edit-refresh-alert {
+    font-size: 12px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    top: auto;
+    bottom: calc(70px + var(--safe-bottom));
+    right: 14px;
+    left: 14px;
+    max-width: none;
+    font-size: 13px;
+  }
 }
 
-/* Barra lateral decorativa */
-.login-bg::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 420px;
-  background: linear-gradient(160deg, var(--sidebar) 0%, var(--sidebar2) 100%);
-  z-index: 0;
+/* ══════════════════════════════════════
+   8. BREAKPOINT ≤ 480px — telas muito pequenas
+══════════════════════════════════════ */
+@media (max-width: 480px) {
+  header.brand-header {
+    padding: 0 10px;
+    padding-top: var(--safe-top);
+  }
+
+  .brand-system-title {
+    font-size: 13px;
+  }
+
+  /* Stats em 2 colunas fixas */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Search bar em coluna única */
+  .search-bar {
+    grid-template-columns: 1fr;
+  }
+  .search-bar input[type="text"]:first-child {
+    grid-column: 1;
+  }
+
+  /* Modal ocupa mais espaço */
+  .modal {
+    max-height: 96dvh;
+  }
+
+  /* Seções do formulário */
+  .f-section {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  /* Botões de ação do formulário em coluna */
+  #os-form > div:last-child {
+    flex-direction: column;
+  }
+  #os-form > div:last-child .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
-/* ── Card ── */
-.login-card {
-  position: relative;
-  z-index: 2;
-  background: #fff;
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(15,30,60,.06);
-  width: 100%;
-  max-width: 400px;
-  padding: 44px 40px 36px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: fadeUp .4s cubic-bezier(.22,.68,0,1.2) both;
-  margin-left: 60px; /* offset da barra azul */
+/* ══════════════════════════════════════
+   9. LANDSCAPE MOBILE
+══════════════════════════════════════ */
+@media (max-width: 768px) and (orientation: landscape) {
+  header.brand-header {
+    height: 48px;
+    height: calc(48px + var(--safe-top));
+  }
+  .sidebar {
+    top: calc(48px + var(--safe-top));
+  }
+  .app {
+    min-height: calc(100dvh - 48px);
+  }
+  .modal-overlay {
+    align-items: center; /* No landscape, modal no centro */
+    padding: 16px;
+  }
+  .modal {
+    border-radius: var(--r-xl);
+    max-height: 90dvh;
+    max-width: 640px;
+    margin: auto;
+    padding-bottom: 0;
+  }
 }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ══════════════════════════════════════
+   10. SUPORTE A DVH (iOS ≥ 15.4, Android Chrome)
+   Fallback para navegadores sem suporte
+══════════════════════════════════════ */
+@supports not (height: 100dvh) {
+  .app       { min-height: calc(100vh - 56px); }
+  .sidebar   { height: calc(100vh - 56px); }
+  .modal     { max-height: 92vh; }
 }
 
-.login-logo {
-  height: 44px;
-  width: auto;
-  margin-bottom: 10px;
-}
+/* ══════════════════════════════════════
+   11. PWA STANDALONE — ajustes para "app instalado"
+══════════════════════════════════════ */
+@media (display-mode: standalone) {
+  /* No iPhone com notch, o status bar fica sobre o app */
+  body {
+    padding-top: var(--safe-top);
+  }
 
-.login-subtitle {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--steel);
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  margin-bottom: 28px;
-  text-align: center;
-}
+  /* Esconde o footer "Desenvolvido por" quando instalado como app */
+  .dev-watermark {
+    display: none;
+  }
 
-.login-divider {
-  width: 100%;
-  height: 1px;
-  background: var(--bg3);
-  margin-bottom: 26px;
-}
-
-/* ── Campos ── */
-.login-field {
-  width: 100%;
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.login-field label {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .7px;
-  text-transform: uppercase;
-  color: var(--steel);
-}
-
-.login-field input {
-  background: var(--bg);
-  border: 1.5px solid var(--bg4);
-  color: var(--light);
-  padding: 11px 14px;
-  border-radius: var(--r);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  width: 100%;
-  transition: border-color .15s, box-shadow .15s, background .15s;
-  outline: none;
-  min-height: auto;
-}
-
-.login-field input:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 4px rgba(7,98,200,.10);
-  background: #fff;
-}
-
-.login-field input.error {
-  border-color: var(--red);
-  box-shadow: 0 0 0 4px var(--red-bg);
-}
-
-/* ── Erro ── */
-.login-error {
-  display: none;
-  background: var(--red-bg);
-  border: 1px solid rgba(224,62,62,.20);
-  color: #a33030;
-  border-radius: var(--r);
-  padding: 10px 14px;
-  font-size: 13px;
-  width: 100%;
-  margin-bottom: 14px;
-  text-align: center;
-  font-weight: 500;
-}
-.login-error.show { display: block; }
-
-/* ── Botão ── */
-.login-btn {
-  width: 100%;
-  padding: 13px 0;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal2) 100%);
-  color: #fff;
-  border: none;
-  border-radius: var(--r);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .4px;
-  cursor: pointer;
-  transition: opacity .15s, transform .12s, box-shadow .15s;
-  margin-top: 6px;
-  box-shadow: 0 4px 16px rgba(7,98,200,.30);
-}
-.login-btn:hover    { opacity: .90; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(7,98,200,.38); }
-.login-btn:active   { transform: translateY(0); opacity: 1; }
-.login-btn:disabled { opacity: .50; cursor: not-allowed; transform: none; box-shadow: none; }
-
-.login-footer {
-  margin-top: 24px;
-  font-size: 11px;
-  color: var(--steel);
-  text-align: center;
-  opacity: .7;
-}
-
-/* ── Responsive ── */
-@media (max-width: 640px) {
-  .login-bg::after { display: none; }
-  .login-card { margin-left: 0; padding: 32px 22px 28px; margin: 16px; }
+  /* No standalone, a barra inferior do iPhone precisa de espaço */
+  .dev-footer {
+    padding-bottom: calc(8px + var(--safe-bottom));
+  }
+  .main {
+    padding-bottom: calc(80px + var(--safe-bottom));
+  }
 }
