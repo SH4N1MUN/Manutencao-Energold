@@ -996,10 +996,10 @@ function renderDash(){
   }
 
   if(!recentes.length){
-    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
     return;
   }
-  // Dashboard: 12 colunas — inclui "Registrado por" e "Fechado por" com nome + data
+  // Dashboard: 13 colunas — inclui SLA, Registrado e Fechado
   tbody.innerHTML = recentes.map(o=>`<tr onclick="verOS('${o.id}')">
     <td><span class="os-num">${o.numero}</span></td>
     <td style="white-space:nowrap">${o.tag}</td>
@@ -1008,6 +1008,7 @@ function renderDash(){
     <td style="font-size:12px">${o.mecanico||'—'}</td>
     <td>${tipoBadge(o.tipo)}</td>
     <td>${statusBadge(o.status)}</td>
+    <td style="min-width:130px;padding:8px 10px">${slaBadge(o)}</td>
     <td style="white-space:nowrap;font-size:12px">${fmtDT(o.inicio)}</td>
     <td style="white-space:nowrap;font-size:12px">${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
     <td style="white-space:nowrap;font-size:12px">${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
@@ -1081,6 +1082,7 @@ function renderLista(){
     <td>${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
     <td>${o.horimetroAtual!=null ? o.horimetroAtual : '—'}</td>
     <td>${statusBadge(o.status)}</td>
+    <td style="min-width:130px;padding:8px 10px">${slaBadge(o)}</td>
     <td style="white-space:nowrap">
       <button class="btn btn-ghost btn-xs" onclick="verOS('${o.id}')">👁</button>
       ${currentUser && currentUser.perms.editar ? `<button class="btn btn-ghost btn-xs" onclick="editarOS('${o.id}')">✏</button>` : ''}
