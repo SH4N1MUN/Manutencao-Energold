@@ -2,9 +2,11 @@
    HEADER
 ════════════════════════════════════════ */
 header.brand-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 200;
+  left: 0;
+  right: 0;
+  z-index: 300; /* acima da sidebar (100) e modais (200) */
   height: 64px;
   display: flex;
   align-items: center;
@@ -67,6 +69,8 @@ header.brand-header {
 .app {
   display: flex;
   min-height: calc(100vh - 64px);
+  /* margin-top afasta o .app do topo para não ficar sob o header fixed */
+  margin-top: 64px;
 }
 
 /* ════════════════════════════════════════
@@ -321,4 +325,5 @@ header.brand-header {
 }
 
 /* Stacking context */
-.main, .modal, .card, header, .sidebar, .toast { position: relative; z-index: 2; }
+/* z-index gerenciado individualmente: header=300, sidebar=100, modal=500, toast=9999 */
+.main, .card { position: relative; z-index: 2; }
