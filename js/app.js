@@ -429,7 +429,7 @@ function markOSPending(os, motivo='pendente'){
     ...os,
     syncStatus: 'pending',
     syncError: motivo,
-    updated_at: os.updated_at || new Date().toISOString()
+    updated_at: os.updated_at || gerarDataRegistroGoogle()
   };
   upsertOSLocal(payload);
   const idx = os_pending.findIndex(o => o.id === payload.id);
@@ -443,7 +443,7 @@ function markOSSynced(os){
     ...os,
     syncStatus: 'synced',
     syncError: '',
-    updated_at: os.updated_at || new Date().toISOString()
+    updated_at: os.updated_at || gerarDataRegistroGoogle()
   };
   upsertOSLocal(payload);
   os_pending = os_pending.filter(o => o.id !== payload.id);
@@ -524,8 +524,8 @@ async function enviarPendentesOS(){
     try{
       const googlePayload = {
         id: os.id,
-        data_registro: formatarDataRegistro(os.data_registro || new Date().toISOString().replace('T', ' ').substring(0, 19)),
-        updated_at: os.updated_at || new Date().toISOString(),
+        data_registro: formatarDataRegistro(os.data_registro || gerarDataRegistroGoogle()),
+        updated_at: os.updated_at || gerarDataRegistroGoogle(),
         projeto: os.projeto,
         cliente: os.cliente,
         local: os.local,
@@ -553,10 +553,10 @@ async function enviarPendentesOS(){
         sent += 1;
         markOSSynced(os);
       }else{
-        restantes.push({ ...os, syncStatus:'pending', syncError:'API sem sucesso', updated_at:new Date().toISOString() });
+        restantes.push({ ...os, syncStatus:'pending', syncError:'API sem sucesso', updated_at: gerarDataRegistroGoogle() });
       }
     }catch(err){
-      restantes.push({ ...os, syncStatus:'pending', syncError:String(err && err.message || err || 'Falha no envio'), updated_at:new Date().toISOString() });
+      restantes.push({ ...os, syncStatus:'pending', syncError:String(err && err.message || err || 'Falha no envio'), updated_at: gerarDataRegistroGoogle() });
     }
   }
 
@@ -797,7 +797,7 @@ async function salvarOS(e){
     assinada: document.getElementById('f-assinada').value,
   };
 
-  os.updated_at = new Date().toISOString();
+  os.updated_at = gerarDataRegistroGoogle();
   os.syncStatus = 'pending';
   os.syncError = '';
 
@@ -814,7 +814,7 @@ async function salvarOS(e){
   try{
     const googlePayload = {
       id: os.id,
-      data_registro: formatarDataRegistro(new Date().toISOString().replace('T', ' ').substring(0, 19)),
+      data_registro: formatarDataRegistro(gerarDataRegistroGoogle()),
       projeto: os.projeto,
       cliente: os.cliente,
       local: os.local,
@@ -990,8 +990,8 @@ function renderDash(){
   // Formata data/hora curta: "13/04 14:32"
   function fmtDTcurto(dt){
     if(!dt) return '';
-    const d = new Date(String(dt).replace(' ','T'));
-    if(isNaN(d)) return '';
+    const d = parseDateLocal(dt);
+    if(!d || isNaN(d)) return '';
     return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   }
 
@@ -2008,10 +2008,62 @@ function tipoBadge(t){
         : 'b-preventiva';
   return `<span class="badge ${cls}">${t||'—'}</span>`;
 }
+// ════════════════════════════════════════════════════
+// PARSER DE DATA LOCAL — evita conversão UTC→local
+// Aceita: "DD/MM/YYYY HH:mm:ss", "YYYY-MM-DD HH:mm:ss",
+//         "YYYY-MM-DDTHH:mm:ss" (sem Z), ISO com Z
+// Datas sem fuso (vindas do Sheets) são tratadas como
+// horário local (Brasília), nunca como UTC.
+// ════════════════════════════════════════════════════
+function parseDateLocal(dt){
+  if(!dt) return null;
+  const s = String(dt).trim();
+
+  // ISO com fuso explícito (Z ou +HH:mm) → deixa o Date converter normalmente
+  if(/Z$|[+-]\d{2}:\d{2}$/.test(s)){
+    return new Date(s);
+  }
+
+  // Formato BR: "DD/MM/YYYY HH:mm:ss" ou "DD/MM/YYYY HH:mm"
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})[\sT](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if(br){
+    return new Date(
+      parseInt(br[3]),        // ano
+      parseInt(br[2]) - 1,    // mês (0-indexed)
+      parseInt(br[1]),        // dia
+      parseInt(br[4]),        // hora
+      parseInt(br[5]),        // minuto
+      parseInt(br[6] || 0)    // segundo
+    );
+  }
+
+  // Formato ISO sem fuso: "YYYY-MM-DD HH:mm:ss" ou "YYYY-MM-DDTHH:mm:ss"
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if(iso){
+    return new Date(
+      parseInt(iso[1]),
+      parseInt(iso[2]) - 1,
+      parseInt(iso[3]),
+      parseInt(iso[4]),
+      parseInt(iso[5]),
+      parseInt(iso[6] || 0)
+    );
+  }
+
+  // Só data: "YYYY-MM-DD" ou "DD/MM/YYYY"
+  const dataIso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(dataIso) return new Date(parseInt(dataIso[1]), parseInt(dataIso[2])-1, parseInt(dataIso[3]));
+
+  const dataBr = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(dataBr) return new Date(parseInt(dataBr[3]), parseInt(dataBr[2])-1, parseInt(dataBr[1]));
+
+  return null;
+}
+
 function fmtDT(dt){
   if(!dt) return '—';
-  const d = new Date(dt);
-  if(isNaN(d)) return dt;
+  const d = parseDateLocal(dt);
+  if(!d || isNaN(d)) return String(dt);
   return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 let toastTimer = null;
@@ -2117,43 +2169,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ════════════════════════════════════════════════════
 function formatarDataRegistro(dataStr) {
   if (!dataStr || dataStr === 'undefined') {
-    return new Date().toISOString().replace('T', ' ').substring(0, 19);
+    return gerarDataRegistroGoogle();
   }
-  
-  // Converter para string se for objeto
+
   dataStr = String(dataStr).trim();
-  
-  // Se já está no formato correto (YYYY-MM-DD HH:mm:ss)
+
+  // Já está no formato correto "YYYY-MM-DD HH:mm:ss" → retorna direto
   if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dataStr)) {
     return dataStr;
   }
-  
-  // Se é um toString() de Date (Sat Apr 11 2026 18:02:30 GMT-0300...)
-  // Esse é o formato que o Google Sheets está devolvendo
-  if (dataStr.includes('GMT') || dataStr.includes('Sat') || dataStr.includes('Sun') || 
-      dataStr.includes('Mon') || dataStr.includes('Tue') || dataStr.includes('Wed') ||
-      dataStr.includes('Thu') || dataStr.includes('Fri')) {
+
+  // Formato BR da planilha "DD/MM/YYYY HH:mm:ss" → converte sem timezone
+  const br = dataStr.match(/^(\d{2})\/(\d{2})\/(\d{4})[\sT](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (br) {
+    return `${br[3]}-${br[2]}-${br[1]} ${br[4]}:${br[5]}:${br[6]||'00'}`;
+  }
+
+  // toString() de Date com GMT explícito: "Sat Apr 11 2026 18:02:30 GMT-0300"
+  // Nesse caso o fuso está na string — new Date() interpreta corretamente
+  // então usamos getters locais para extrair sem re-converter
+  if (dataStr.includes('GMT') || /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/.test(dataStr)) {
     try {
       const d = new Date(dataStr);
       if (!isNaN(d.getTime())) {
-        return d.toISOString().replace('T', ' ').substring(0, 19);
+        const pad = n => String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
       }
     } catch (e) {
       console.warn('Erro ao parsear data GMT:', dataStr);
     }
   }
-  
-  // Tentar parsear como data ISO ou outro formato
-  try {
-    const d = new Date(dataStr);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString().replace('T', ' ').substring(0, 19);
-    }
-  } catch (e) {}
-  
-  // Se tudo falhar, usar data atual
+
+  // Formato ISO sem fuso "YYYY-MM-DDTHH:mm:ss" → extrai sem Date() para evitar UTC shift
+  const iso = dataStr.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (iso) {
+    return `${iso[1]}-${iso[2]}-${iso[3]} ${iso[4]}:${iso[5]}:${iso[6]||'00'}`;
+  }
+
   console.warn('Data inválida, usando data atual:', dataStr);
-  return new Date().toISOString().replace('T', ' ').substring(0, 19);
+  return gerarDataRegistroGoogle();
 }
 
 
@@ -2176,6 +2230,8 @@ function limparDataRegistroEmTodas() {
 // GERAR TIMESTAMP PARA GOOGLE SHEETS
 // ════════════════════════════════════════════════════
 function gerarDataRegistroGoogle() {
-  // Formata como: 2026-04-11 23:49:11
-  return new Date().toISOString().replace('T', ' ').substring(0, 19);
+  // Usa horário local (não UTC) para evitar diferença de fuso
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
