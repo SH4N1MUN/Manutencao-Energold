@@ -91,25 +91,17 @@ body {
 @media (max-width: 1024px) {
   .main {
     padding: 20px 20px 72px;
-    /* Ajusta margin-left para sidebar menor no tablet */
-    margin-left: 200px;
-    max-width: calc(100% - 200px);
   }
 
-  /* Sidebar menor no tablet — ajusta margin-top do app */
-  .app {
-    margin-top: 64px;
-    min-height: calc(100vh - 64px);
-  }
-
-  /* Reduz sidebar no tablet */
+  /* Sidebar menor no tablet */
   .sidebar {
     width: 200px;
     min-width: 200px;
   }
 
+  /* Footer acompanha */
   .dev-footer {
-    left: 200px;
+    left: 0;
   }
 
   /* Grid de formulário: 3→2 colunas */
@@ -141,10 +133,13 @@ body {
     padding-top: var(--safe-top);
   }
 
-  /* Compensa o header fixed no mobile — margin-top funciona melhor que padding-top em flex */
+  /* No mobile .app não é fixed — volta ao fluxo normal */
+  /* O body rola, sidebar vira drawer por cima */
   .app {
+    position: static;
     margin-top: calc(56px + var(--safe-top));
-    min-height: calc(100dvh - 56px - var(--safe-top));
+    min-height: calc(100dvh - 56px);
+    overflow: visible;
   }
 
   .btn-menu {
@@ -234,12 +229,13 @@ body {
     transform: translateX(0);
   }
 
-  /* ── MAIN — ocupa tela toda (sidebar é drawer, não fixa) ── */
+  /* ── MAIN — ocupa tela toda, body rola no mobile ── */
   .main {
     padding: 16px 14px 80px;
     width: 100%;
     max-width: 100%;
     margin-left: 0;
+    overflow-y: visible;
     min-height: calc(100dvh - 56px);
   }
 
