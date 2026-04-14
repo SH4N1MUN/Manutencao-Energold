@@ -1197,14 +1197,78 @@ function fecharModalExt(e){ if(e.target===document.getElementById('modal-overlay
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); currentModal=null; }
 
 // ════════════════════════════════════════════════════
-// IMPRESSÃO
+// IMPRESSÃO / PDF — Layout compacto A4 retrato
+// v2 — uma página garantida + botão compartilhar PDF
 // ════════════════════════════════════════════════════
-function printOS(){
+
+/* ── Compartilhar / salvar PDF via Web Share API ── */
+async function shareOSPdf() {
+  if (!currentModal) return;
+
+  // Tenta usar a Web Share API (nativa mobile — iOS/Android)
+  const supportsShare = navigator.share && navigator.canShare;
+
+  if (supportsShare) {
+    try {
+      // Gera o HTML da OS para um blob de texto (fallback se print-to-pdf não disponível)
+      const os = currentModal;
+      const titulo = `${os.numero} — ${os.equipamento || os.tag} — ${os.mecanico}`;
+      const texto  = _buildOsTextSummary(os);
+
+      await navigator.share({
+        title: titulo,
+        text:  texto,
+      });
+      return;
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        // Fallback para impressão normal
+      } else {
+        return; // Usuário cancelou
+      }
+    }
+  }
+
+  // Desktop / navegadores sem Web Share: abre janela de impressão
+  // com dica para "Salvar como PDF"
+  printOS(true);
+}
+
+/* Gera um resumo em texto para o compartilhamento nativo */
+function _buildOsTextSummary(os) {
+  const f = v => String(v ?? '—');
+  return [
+    `OS: ${f(os.numero)}`,
+    `Status: ${f(os.status)}  |  Tipo: ${f(os.tipo)}`,
+    `─────────────────────────`,
+    `TAG/Equipamento: ${f(os.tag)} — ${f(os.equipamento)}`,
+    `Projeto: ${f(os.projeto)}  |  Local: ${f(os.local)}`,
+    `Executor: ${f(os.mecanico)}  |  Sondador: ${f(os.sondador)}`,
+    `─────────────────────────`,
+    `Módulo: ${f(os.modulo || os.sistema)}`,
+    `Componente: ${f(os.componente)}`,
+    `Serviço: ${f(os.servico)}`,
+    os.obs ? `Obs: ${f(os.obs)}` : '',
+    `─────────────────────────`,
+    `Início:  ${fmtDT(os.inicio)}`,
+    `Término: ${os.termino ? fmtDT(os.termino) : 'Em andamento'}`,
+    `Tempo:   ${os.tempoH != null ? os.tempoH.toFixed(2) + 'h' : '—'}`,
+    `Horímetro: ${os.horimetroAtual != null ? os.horimetroAtual : '—'}`,
+    `─────────────────────────`,
+    `Registrado por: ${f(os.registrado_por)}`,
+    `Fechado por:    ${f(os.fechado_por)}`,
+    ``,
+    `Emitido em ${new Date().toLocaleString('pt-BR')}`,
+    `ENERGOLD Drilling Brasil — Controle de Manutenção`,
+  ].filter(l => l !== null).join('\n');
+}
+
+function printOS(fromShare = false){
   if(!currentModal) return;
   const os = currentModal;
-  const w = window.open('','_blank','width=980,height=760');
+  const w = window.open('','_blank','width=820,height=1060');
   if(!w){
-    toast('O navegador bloqueou a janela de impressão. Libere pop-ups e tente novamente.', true);
+    toast('O navegador bloqueou a janela. Libere pop-ups e tente novamente.', true);
     return;
   }
   const esc = v => String(v ?? '—')
@@ -1225,335 +1289,385 @@ function printOS(){
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Impressão ${esc(os.numero)}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(os.numero)} — Ordem de Serviço</title>
 <style>
-  @page { margin: 14mm; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: Avenir, "Avenir Next", Calibri, Arial, sans-serif;
-    color: #243746;
-    background: #ffffff;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .sheet {
-    width: 100%;
-    border: 1px solid #cfd8e3;
-    border-radius: 14px;
-    overflow: hidden;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 18px;
-    padding: 18px 22px;
-    background: linear-gradient(135deg, #ffffff 0%, #eef5fb 100%);
-    border-bottom: 4px solid #036AAB;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .brand img {
-    width: 240px;
-    height: auto;
-    display: block;
-  }
-  .brand-meta small {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: #6B7374;
-    margin-bottom: 4px;
-  }
-  .brand-meta strong {
-    display: block;
-    font-size: 17px;
-    color: #333366;
-    letter-spacing: .2px;
-  }
-  .doc-box {
-    text-align: right;
-    min-width: 220px;
-  }
-  .doc-box small {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 1.3px;
-    text-transform: uppercase;
-    color: #6B7374;
-    margin-bottom: 4px;
-  }
-  .doc-box .num {
-    font-size: 30px;
-    font-weight: 800;
-    color: #036AAB;
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .badges {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .4px;
-    border: 1px solid transparent;
-    background: #eef5fb;
-    color: #243746;
-  }
-  .badge.status {
-    background: #e9f8ef;
-    border-color: #b7e3c8;
-    color: #1f7a52;
-  }
-  .badge.tipo {
-    background: #fff2ea;
-    border-color: #ffd2bb;
-    color: #c54f00;
-  }
-  .content { padding: 20px 22px 24px; }
-  .section-title {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
-    color: #036AAB;
-    padding-bottom: 6px;
-    border-bottom: 2px solid #d5e5f2;
-    margin: 0 0 12px;
-  }
-  .grid-3, .grid-4, .grid-2 {
-    display: grid;
-    gap: 12px 16px;
-    margin-bottom: 16px;
-  }
-  .grid-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid-4 { grid-template-columns: repeat(4, 1fr); }
-  .field {
-    background: #ffffff;
-    border: 1px solid #dce6ef;
-    border-radius: 10px;
-    padding: 10px 12px;
-    min-height: 66px;
-  }
-  .field label {
-    display: block;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.1px;
-    text-transform: uppercase;
-    color: #6B7374;
-    margin-bottom: 6px;
-  }
-  .field p {
-    margin: 0;
-    font-size: 13px;
-    color: #243746;
-    font-weight: 600;
-    line-height: 1.4;
-    word-break: break-word;
-  }
-  .field.highlight {
-    background: #eef5fb;
-    border-color: #c7dff0;
-  }
-  .field.wide {
-    min-height: 82px;
-  }
-  .footer-sign {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    margin-top: 30px;
-  }
-  .sign {
-    padding-top: 8px;
-    border-top: 1px solid #8aa5bb;
-    text-align: center;
-    font-size: 11px;
-    color: #51687a;
-  }
-  .print-footer {
-    margin-top: 18px;
-    font-size: 10px;
-    color: #6B7374;
-    text-align: right;
-  }
+/* ════════════════════════════════════════
+   IMPRESSÃO A4 RETRATO — COMPACTO
+   Garantia de 1 página | ENERGOLD v2
+════════════════════════════════════════ */
 
-  .dev-print-watermark {
-    position: fixed;
-    inset: 0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    pointer-events:none;
-    opacity:.06;
-    color:#036AAB;
-    font-size:34px;
-    font-weight:800;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    transform:rotate(-18deg);
-    z-index:0;
-    white-space:nowrap;
-  }
-  .dev-print-watermark span {
-    border:2px solid rgba(3,106,171,.18);
-    border-radius:18px;
-    padding:8px 18px;
-    background:rgba(255,255,255,.2);
-  }
-  .sheet { position: relative; z-index: 1; }
-  .print-footer {
-    margin-top: 18px;
-    display:flex;
-    justify-content:space-between;
-    gap:16px;
-    flex-wrap:wrap;
-    font-size:11px;
-    color:#6B7374;
-    border-top:1px solid #cfd8e3;
-    padding-top:10px;
-  }
-
-
-.header-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
-.v4-sync-area{display:flex;align-items:center;gap:12px;font-size:12px;padding:6px 10px;border:1px solid #D6E4EF;border-radius:999px;background:rgba(255,255,255,.92)}
-.v4-status{display:inline-flex;align-items:center;gap:8px;color:#23A26D;font-weight:700;line-height:1}
-.v4-status.offline{color:#D64545}
-.v4-status.syncing{color:#C8952A}
-.v4-dot{display:inline-block !important;width:12px !important;height:12px !important;min-width:12px !important;min-height:12px !important;flex:0 0 12px !important;border-radius:50% !important;background:#23A26D !important;border:2px solid #ffffff !important;box-shadow:0 0 0 3px rgba(35,162,109,.18) !important;vertical-align:middle}
-.v4-dot.erro{background:#D64545 !important;box-shadow:0 0 0 3px rgba(214,69,69,.18) !important}
-.v4-dot.sync{background:#C8952A !important;box-shadow:0 0 0 3px rgba(200,149,42,.18) !important}
-.v4-sync-hora{color:var(--steel);font-size:11px;min-width:74px;text-align:center;font-variant-numeric:tabular-nums}
-.v4-sync-btn{background:#3b82f6;color:white;padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:700;margin-left:0}
-.v4-sync-btn:hover{background:#2563eb}
-.v4-sync-btn:disabled{opacity:0.6;cursor:not-allowed}
-
-/* ── BLOQUEIO DE AUTO REFRESH DURANTE EDIÇÃO ── */
-.edit-refresh-alert{
-  display:none;
-  margin-bottom:14px;
-  padding:12px 14px;
-  border:1px solid rgba(255,97,0,.18);
-  background:rgba(255,97,0,.08);
-  color:#8a4b17;
-  border-radius:12px;
-  font-size:13px;
-  line-height:1.4;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.edit-refresh-alert.show{display:flex}
-.edit-refresh-alert strong{color:#d95a08}
-.edit-refresh-actions{display:flex;gap:8px;flex-wrap:wrap}
-@media (max-width: 480px){
-  .edit-refresh-alert{padding:10px 12px}
-  .edit-refresh-actions{width:100%}
-  .edit-refresh-actions .btn{width:100%}
+/* Página A4 retrato com margens mínimas */
+@page {
+  size: A4 portrait;
+  margin: 10mm 12mm 10mm 12mm;
 }
 
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:    #0762C8;
+  --navy:    #0B1E3D;
+  --steel:   #6B7A90;
+  --green:   #12B76A;
+  --red:     #E03E3E;
+  --orange:  #F06A00;
+  --yellow:  #F59E0B;
+  --bg:      #F5F7FA;
+  --border:  #D8E2EE;
+  --text:    #18253A;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8.5pt;
+  color: var(--text);
+  background: #fff;
+  line-height: 1.35;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── BARRA DE AÇÕES (oculta na impressão) ── */
+.no-print {
+  background: #f0f7ff;
+  border-bottom: 1px solid #c7dff0;
+  padding: 10px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.no-print strong { color: var(--navy); font-size: 13px; flex: 1; }
+.btn-print, .btn-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 40px;
+}
+.btn-print  { background: var(--blue); color: #fff; }
+.btn-share  { background: #12B76A; color: #fff; }
+.btn-print:hover  { background: #0553a4; }
+.btn-share:hover  { background: #0d9a59; }
+.btn-close  {
+  background: none; border: 1px solid var(--border);
+  color: var(--steel); border-radius: 8px;
+  padding: 8px 14px; font-size: 12px; cursor: pointer;
+  min-height: 40px;
+}
+.share-hint {
+  font-size: 11px;
+  color: var(--steel);
+  padding: 4px 16px 8px;
+  background: #f0f7ff;
+  display: none;
+}
+.share-hint.visible { display: block; }
+@media print { .no-print, .share-hint { display: none !important; } }
+
+/* ── FOLHA ── */
+.sheet {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  page-break-inside: avoid;
+}
+
+/* ── HEADER ── */
+.hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #fff 0%, #eef5fb 100%);
+  border-bottom: 3px solid var(--blue);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { height: 32px; width: auto; display: block; }
+.brand-meta small {
+  display: block; font-size: 7pt; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--steel); margin-bottom: 2px;
+}
+.brand-meta strong { display: block; font-size: 10pt; color: var(--navy); }
+.doc-box { text-align: right; }
+.doc-box small {
+  display: block; font-size: 7pt; letter-spacing: 1.1px;
+  text-transform: uppercase; color: var(--steel); margin-bottom: 2px;
+}
+.doc-num {
+  font-size: 22pt; font-weight: 900; color: var(--blue);
+  line-height: 1; margin-bottom: 4px;
+}
+.badges { display: flex; justify-content: flex-end; gap: 5px; flex-wrap: wrap; }
+.badge {
+  padding: 2px 8px; border-radius: 999px; font-size: 7.5pt;
+  font-weight: 700; border: 1px solid transparent;
+}
+.b-ok    { background: #e9f8ef; border-color: #b7e3c8; color: #1f7a52; }
+.b-open  { background: #eef5fb; border-color: #b8d0e8; color: #0555AC; }
+.b-and   { background: #fff8e1; border-color: #ffe082; color: #a07000; }
+.b-cor   { background: #fef2f2; border-color: #fcc; color: #b91c1c; }
+.b-pre   { background: #eef5fb; border-color: #b8d0e8; color: #0555AC; }
+.b-det   { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+/* ── CONTEÚDO ── */
+.content { padding: 8px 14px 10px; }
+
+/* Seção título */
+.sec {
+  font-size: 7pt; font-weight: 900; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--blue);
+  border-bottom: 1.5px solid #d5e5f2;
+  padding-bottom: 3px; margin: 8px 0 6px;
+}
+.sec:first-child { margin-top: 0; }
+
+/* Grids de campos */
+.g2 { display: grid; grid-template-columns: 1fr 1fr;     gap: 5px; margin-bottom: 5px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 5px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; margin-bottom: 5px; }
+
+/* Campo individual */
+.f {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+.f.hl { background: #eef5fb; border-color: #c7dff0; }
+.f.reg { background: #f0f7ff; border-color: #c7dff0; }
+.f.fec { background: #f0fdf4; border-color: #b7e3c8; }
+.f label {
+  display: block; font-size: 6.5pt; font-weight: 800;
+  letter-spacing: .9px; text-transform: uppercase; color: var(--steel);
+  margin-bottom: 2px;
+}
+.f p {
+  font-size: 8pt; color: var(--text); font-weight: 600;
+  line-height: 1.3; word-break: break-word;
+}
+.f p.big { font-size: 12pt; color: var(--blue); font-weight: 800; }
+
+/* Campo texto longo (serviço/obs) */
+.flong {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 7px;
+  margin-bottom: 5px;
+  min-height: 28px;
+}
+.flong label {
+  font-size: 6.5pt; font-weight: 800; letter-spacing: .9px;
+  text-transform: uppercase; color: var(--steel);
+  display: block; margin-bottom: 2px;
+}
+.flong p { font-size: 8pt; color: var(--text); line-height: 1.35; }
+
+/* Assinaturas */
+.signs {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 24px; margin-top: 10px;
+}
+.sign {
+  padding-top: 5px; border-top: 1px solid #8aa5bb;
+  text-align: center; font-size: 7.5pt; color: #51687a;
+  line-height: 1.5;
+}
+
+/* Rodapé */
+.ft {
+  margin-top: 8px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+  font-size: 7pt; color: var(--steel);
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+/* Marca d'água */
+.wm {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: .04;
+  color: var(--blue); font-size: 28pt; font-weight: 900;
+  letter-spacing: .14em; text-transform: uppercase;
+  transform: rotate(-18deg); z-index: 0; white-space: nowrap;
+}
+.sheet { position: relative; z-index: 1; }
 </style>
 </head>
 <body>
-  <div class="dev-print-watermark"><span>Desenvolvido por Gabriel Felipe dos Santos © 2026</span></div>
-  <div class="sheet">
-    <div class="header">
-      <div class="brand">
-        <img src="${logo}" alt="Energold Drilling Brasil">
-        <div class="brand-meta">
-          <small>Controle de manutenção</small>
-          <strong>${company}</strong>
-        </div>
-      </div>
-      <div class="doc-box">
-        <small>Ordem de serviço</small>
-        <div class="num">${esc(os.numero)}</div>
-        <div class="badges">
-          <span class="badge status">${esc(os.status)}</span>
-          <span class="badge tipo">${esc(os.tipo)}</span>
-        </div>
+
+<!-- ── BARRA DE AÇÕES (só na tela, sumida na impressão) ── -->
+<div class="no-print">
+  <strong>📄 ${esc(os.numero)} — Pronto para imprimir ou salvar como PDF</strong>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <button class="btn-share" onclick="doShare()" id="btn-share">📤 Compartilhar</button>
+  <button class="btn-close" onclick="window.close()">✕ Fechar</button>
+</div>
+<div class="share-hint" id="share-hint">
+  💡 <strong>Dica:</strong> Para salvar como PDF, escolha "Salvar como PDF" na impressora. No celular, use o botão Compartilhar acima para enviar pelo WhatsApp, e-mail ou salvar nos arquivos.
+</div>
+
+<!-- ── MARCA D'ÁGUA ── -->
+<div class="wm">ENERGOLD</div>
+
+<!-- ── FOLHA A4 ── -->
+<div class="sheet">
+
+  <!-- HEADER -->
+  <div class="hd">
+    <div class="brand">
+      <img src="${logo}" alt="Energold Drilling Brasil">
+      <div class="brand-meta">
+        <small>Controle de Manutenção</small>
+        <strong>${company}</strong>
       </div>
     </div>
-
-    <div class="content">
-      <div class="section-title">Identificação do ativo</div>
-      <div class="grid-3">
-        <div class="field"><label>TAG / Equipamento</label><p>${esc(os.tag)}${os.equipamento ? ' — ' + esc(os.equipamento) : ''}</p></div>
-        <div class="field"><label>Modelo</label><p>${esc(os.modelo)}</p></div>
-        <div class="field"><label>Status</label><p>${esc(os.status)}</p></div>
+    <div class="doc-box">
+      <small>Ordem de Serviço</small>
+      <div class="doc-num">${esc(os.numero)}</div>
+      <div class="badges">
+        <span class="badge ${os.status==='Concluído'?'b-ok':os.status==='Em andamento'?'b-and':'b-open'}">${esc(os.status)}</span>
+        <span class="badge ${(os.tipo||'').toLowerCase().startsWith('corretiva')?'b-cor':(os.tipo||'').toLowerCase()==='detectiva'?'b-det':'b-pre'}">${esc(os.tipo)}</span>
       </div>
-
-      <div class="grid-3">
-        <div class="field"><label>Projeto</label><p>${esc(os.projeto)}</p></div>
-        <div class="field"><label>Cliente</label><p>${esc(os.cliente)}</p></div>
-        <div class="field"><label>Local</label><p>${esc(os.local)}</p></div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field"><label>Mecânico</label><p>${esc(os.mecanico)}</p></div>
-        <div class="field"><label>Sondador</label><p>${esc(os.sondador)}</p></div>
-      </div>
-
-      <div class="section-title">Estrutura da manutenção</div>
-      <div class="grid-3">
-        <div class="field"><label>Módulo da Sonda</label><p>${esc(os.modulo || os.sistema)}</p></div>
-        <div class="field"><label>Componente / TAG</label><p>${esc(os.componente)}</p></div>
-        <div class="field"><label>OS assinada</label><p>${esc(os.assinada || 'Não')}</p></div>
-      </div>
-
-      <div class="field wide" style="margin-bottom:16px">
-        <label>Serviço realizado</label>
-        <p>${esc(os.servico)}</p>
-      </div>
-
-      ${os.obs ? `<div class="field wide" style="margin-bottom:16px"><label>Observações</label><p>${esc(os.obs)}</p></div>` : ''}
-
-      <div class="section-title">Tempos e horímetro</div>
-      <div class="grid-4">
-        <div class="field highlight"><label>Início</label><p>${esc(fmtDT(os.inicio))}</p></div>
-        <div class="field highlight"><label>Término</label><p>${os.termino ? esc(fmtDT(os.termino)) : 'Em andamento'}</p></div>
-        <div class="field highlight"><label>Tempo total [h]</label><p style="color:#036AAB;font-size:18px">${os.tempoH!=null ? esc(os.tempoH.toFixed(2)) : '—'}</p></div>
-        <div class="field highlight"><label>Horímetro atual do ativo [h]</label><p>${os.horimetroAtual!=null ? esc(os.horimetroAtual) : '—'}</p></div>
-      </div>
-
-      <div class="footer-sign">
-        <div class="sign">Assinatura do Executor / ${esc(os.mecanico)}</div>
-        <div class="sign">Assinatura do Sondador / ${esc(os.sondador)}</div>
-      </div>
-
-      <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div class="field" style="background:#f0f7ff;border-color:#c7dff0">
-          <label>🖊 Registrado por</label>
-          <p>${esc(os.registrado_por || '—')}</p>
-        </div>
-        <div class="field" style="background:${os.fechado_por ? '#f0fdf4' : '#f9f9f9'};border-color:${os.fechado_por ? '#b7e3c8' : '#dce6ef'}">
-          <label>✅ Fechado por</label>
-          <p style="color:${os.fechado_por ? '#1f7a52' : '#999'}">${esc(os.fechado_por || '—')}</p>
-        </div>
-      </div>
-
-      <div class="print-footer"><span>Documento emitido em ${new Date().toLocaleString('pt-BR')}</span><strong>Desenvolvido por Gabriel Felipe dos Santos © 2026</strong></div>
     </div>
   </div>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+
+    <!-- Identificação do Ativo -->
+    <div class="sec">Identificação do Ativo</div>
+    <div class="g3">
+      <div class="f"><label>TAG / Equipamento</label><p>${esc(os.tag)}${os.equipamento?' — '+esc(os.equipamento):''}</p></div>
+      <div class="f"><label>Modelo</label><p>${esc(os.modelo)}</p></div>
+      <div class="f"><label>OS Assinada</label><p>${esc(os.assinada||'Não')}</p></div>
+    </div>
+    <div class="g3">
+      <div class="f"><label>Projeto</label><p>${esc(os.projeto)}</p></div>
+      <div class="f"><label>Cliente</label><p>${esc(os.cliente)}</p></div>
+      <div class="f"><label>Local</label><p>${esc(os.local)}</p></div>
+    </div>
+    <div class="g2">
+      <div class="f"><label>Executor / Mecânico</label><p>${esc(os.mecanico)}</p></div>
+      <div class="f"><label>Sondador</label><p>${esc(os.sondador||'—')}</p></div>
+    </div>
+
+    <!-- Estrutura da Manutenção -->
+    <div class="sec">Estrutura da Manutenção</div>
+    <div class="g2">
+      <div class="f"><label>Módulo da Sonda</label><p>${esc(os.modulo||os.sistema)}</p></div>
+      <div class="f"><label>Componente / TAG Monitorável</label><p>${esc(os.componente)}</p></div>
+    </div>
+    <div class="flong"><label>Serviço Realizado</label><p>${esc(os.servico)}</p></div>
+    ${os.obs ? `<div class="flong"><label>Observações</label><p>${esc(os.obs)}</p></div>` : ''}
+
+    <!-- Tempos e Horímetro -->
+    <div class="sec">Tempos e Horímetro</div>
+    <div class="g4">
+      <div class="f hl"><label>Início</label><p>${esc(fmtDT(os.inicio))}</p></div>
+      <div class="f hl"><label>Término</label><p>${os.termino?esc(fmtDT(os.termino)):'<span style="color:#a07000">Em andamento</span>'}</p></div>
+      <div class="f hl"><label>Tempo Total [h]</label><p class="big">${os.tempoH!=null?esc(os.tempoH.toFixed(2)):'—'}</p></div>
+      <div class="f hl"><label>Horímetro Atual [h]</label><p>${os.horimetroAtual!=null?esc(os.horimetroAtual):'—'}</p></div>
+    </div>
+
+    <!-- Registro -->
+    <div class="g2">
+      <div class="f reg"><label>🖊 Registrado por</label><p>${esc(os.registrado_por||'—')}</p></div>
+      <div class="f ${os.fechado_por?'fec':''}"><label>✅ Fechado por</label><p style="color:${os.fechado_por?'#1f7a52':'#999'}">${esc(os.fechado_por||'—')}</p></div>
+    </div>
+
+    <!-- Assinaturas -->
+    <div class="signs">
+      <div class="sign">
+        <div style="height:20px"></div>
+        Assinatura do Executor<br><strong>${esc(os.mecanico)}</strong>
+      </div>
+      <div class="sign">
+        <div style="height:20px"></div>
+        Assinatura do Sondador<br><strong>${esc(os.sondador||'—')}</strong>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="ft">
+      <span>Emitido em ${new Date().toLocaleString('pt-BR')}</span>
+      <strong>Desenvolvido por Gabriel Felipe dos Santos © 2026</strong>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /sheet -->
+
+<script>
+/* ── Compartilhar nativo (mobile) ou copiar texto ── */
+async function doShare() {
+  const hint = document.getElementById('share-hint');
+
+  const dadosTexto = [
+    'OS: ${esc(os.numero)} | ${esc(os.status)} | ${esc(os.tipo)}',
+    'Equipamento: ${esc(os.tag)} — ${esc(os.equipamento||'')}',
+    'Projeto: ${esc(os.projeto)} | Local: ${esc(os.local)}',
+    'Executor: ${esc(os.mecanico)}',
+    'Módulo: ${esc(os.modulo||os.sistema)} | Componente: ${esc(os.componente)}',
+    'Serviço: ${esc(os.servico)}',
+    ${os.obs?`'Obs: ${esc(os.obs)}',`:''}
+    'Início: ${esc(fmtDT(os.inicio))} | Término: ${os.termino?esc(fmtDT(os.termino)):'Em andamento'}',
+    'Tempo: ${os.tempoH!=null?os.tempoH.toFixed(2)+'h':'—'} | Horímetro: ${os.horimetroAtual!=null?os.horimetroAtual:'—'}',
+    'Emitido em ${new Date().toLocaleString('pt-BR')}',
+    'ENERGOLD Drilling Brasil',
+  ].join('\\n');
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: '${esc(os.numero)} — Ordem de Serviço',
+        text: dadosTexto,
+      });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  /* Fallback: copia para área de transferência */
+  try {
+    await navigator.clipboard.writeText(dadosTexto);
+    document.getElementById('btn-share').textContent = '✅ Copiado!';
+    setTimeout(() => {
+      document.getElementById('btn-share').textContent = '📤 Compartilhar';
+    }, 2500);
+  } catch(e) {
+    hint.classList.add('visible');
+  }
+}
+
+/* Mostra dica ao abrir no mobile sem Share API */
+window.addEventListener('load', () => {
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  if (isMobile && !navigator.share) {
+    document.getElementById('share-hint').classList.add('visible');
+  }
+});
+<\/script>
+
 </body>
 </html>`);
   w.document.close();
   w.focus();
-  setTimeout(()=>{ w.print(); }, 400);
+  /* No mobile não abre janela nova — a impressão é via botão na tela */
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  if (!isMobile && !fromShare) {
+    setTimeout(() => { w.print(); }, 450);
+  }
 }
 
 // ════════════════════════════════════════════════════
