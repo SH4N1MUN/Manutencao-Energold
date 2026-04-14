@@ -79,10 +79,17 @@ header.brand-header {
   display: flex;
   flex-direction: column;
   padding: 0;
-  position: sticky;
+  /* fixed: sidebar sempre visível, sem pulo durante scroll */
+  position: fixed;
   top: 64px;
+  left: 0;
+  bottom: 0;
   height: calc(100vh - 64px);
   overflow-y: auto;
+  /* Scroll suave dentro da sidebar quando itens excedem a altura */
+  -webkit-overflow-scrolling: touch;
+  /* Garante que fique sobre o conteúdo */
+  z-index: 100;
 }
 
 .sidebar-brand {
@@ -151,8 +158,9 @@ header.brand-header {
 .main {
   flex: 1;
   padding: 28px 28px 72px;
-  overflow-y: auto;
-  max-width: 100%;
+  /* margin-left igual à largura da sidebar (fixed) */
+  margin-left: 220px;
+  max-width: calc(100% - 220px);
   min-width: 0;
   animation: fadeIn .25s ease both;
 }
