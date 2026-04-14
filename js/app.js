@@ -987,11 +987,19 @@ function renderDash(){
   // Helper: extrai primeiro nome de uma string "NOME COMPLETO"
   function primeiroNome(s){ return s ? String(s).split(' ')[0] : '—'; }
 
+  // Formata data/hora curta: "13/04 14:32"
+  function fmtDTcurto(dt){
+    if(!dt) return '';
+    const d = new Date(String(dt).replace(' ','T'));
+    if(isNaN(d)) return '';
+    return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+
   if(!recentes.length){
     tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
     return;
   }
-  // Dashboard: 12 colunas — inclui "Registrado por" e "Fechado por" compactos
+  // Dashboard: 12 colunas — inclui "Registrado por" e "Fechado por" com nome + data
   tbody.innerHTML = recentes.map(o=>`<tr onclick="verOS('${o.id}')">
     <td><span class="os-num">${o.numero}</span></td>
     <td style="white-space:nowrap">${o.tag}</td>
@@ -1003,8 +1011,16 @@ function renderDash(){
     <td style="white-space:nowrap;font-size:12px">${fmtDT(o.inicio)}</td>
     <td style="white-space:nowrap;font-size:12px">${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
     <td style="white-space:nowrap;font-size:12px">${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
-    <td style="font-size:11.5px;color:var(--steel)" title="${o.registrado_por||'—'}">${primeiroNome(o.registrado_por)}</td>
-    <td style="font-size:11.5px;color:${o.fechado_por?'var(--green)':' var(--steel)'}" title="${o.fechado_por||'—'}">${o.fechado_por ? primeiroNome(o.fechado_por) : '<span style="opacity:.45">—</span>'}</td>
+    <td style="color:var(--steel);line-height:1.25">
+      <span style="font-size:11.5px;display:block" title="${o.registrado_por||'—'}">${primeiroNome(o.registrado_por)}</span>
+      ${fmtDTcurto(o.data_registro) ? `<span style="font-size:10px;opacity:.6;display:block">${fmtDTcurto(o.data_registro)}</span>` : ''}
+    </td>
+    <td style="color:${o.fechado_por?'var(--green)':' var(--steel)'};line-height:1.25">
+      ${o.fechado_por
+        ? `<span style="font-size:11.5px;display:block" title="${o.fechado_por}">${primeiroNome(o.fechado_por)}</span>
+           <span style="font-size:10px;opacity:.6;display:block">${fmtDTcurto(o.updated_at)||''}</span>`
+        : '<span style="opacity:.35;font-size:11.5px">—</span>'}
+    </td>
   </tr>`).join('');
 }
 
@@ -2160,11 +2176,6 @@ function limparDataRegistroEmTodas() {
 // GERAR TIMESTAMP PARA GOOGLE SHEETS
 // ════════════════════════════════════════════════════
 function gerarDataRegistroGoogle() {
-  const data = new Date();
-  
-  // Subtrai 3 horas (em milissegundos) para forçar o fuso de Brasília no ISOString
-  const dataBrasilia = new Date(data.getTime() - (3 * 60 * 60 * 1000));
-  
-  // Formata como: YYYY-MM-DD HH:mm:ss
-  return dataBrasilia.toISOString().replace('T', ' ').substring(0, 19);
+  // Formata como: 2026-04-11 23:49:11
+  return new Date().toISOString().replace('T', ' ').substring(0, 19);
 }
