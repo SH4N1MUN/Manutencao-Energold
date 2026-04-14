@@ -130,6 +130,9 @@
 .stat.r::before { background: var(--red); }
 .stat.r::after  { background: var(--red); }
 
+.stat.y::before { background: var(--yellow); }
+.stat.y::after  { background: var(--yellow); }
+
 .stat-val {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 28px;
