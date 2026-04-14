@@ -947,23 +947,32 @@ async function excluirOS(id){
 // DASHBOARD
 // ════════════════════════════════════════════════════
 function renderDash(){
-  const total = os_list.length;
-  const abertas = os_list.filter(o=>o.status==='Em Aberto').length;
-  const concluidas = os_list.filter(o=>o.status==='Concluído').length;
-  const corretivas = os_list.filter(o=>(o.tipo||'').toLowerCase().startsWith('corretiva')).length;
-  const preventivas = os_list.filter(o=>(o.tipo||'').toLowerCase().startsWith('preventiva')).length;
-  const tempoTotal = os_list.reduce((s,o)=>s+(o.tempoH||0),0);
+  const total      = os_list.length;
+  const concluidas = os_list.filter(o => o.status === 'Concluído').length;
+  const corretivas = os_list.filter(o => (o.tipo||'').toLowerCase().startsWith('corretiva')).length;
+  const preventivas= os_list.filter(o => (o.tipo||'').toLowerCase().startsWith('preventiva')).length;
+  const tempoTotal = os_list.reduce((s,o) => s + (o.tempoH||0), 0);
 
-  // MTTR: média de tempo das OS corretivas concluídas
-  const corretivas_concluidas = os_list.filter(o=>(o.tipo||'').toLowerCase().startsWith('corretiva') && o.status==='Concluído' && o.tempoH>0);
-  const mttr = corretivas_concluidas.length ? (corretivas_concluidas.reduce((s,o)=>s+(o.tempoH||0),0)/corretivas_concluidas.length) : 0;
+  // Em andamento = OS com status 'Em andamento' OU 'Em Aberto' (não fechadas)
+  const emAndamento = os_list.filter(o =>
+    o.status === 'Em andamento' || o.status === 'Em Aberto'
+  ).length;
 
-  // Taxa corretiva/preventiva
-  const taxaCorretiva = total ? Math.round((corretivas/total)*100) : 0;
+  // MTTR: média de tempo das OS corretivas concluídas com tempo > 0
+  const corretivas_concluidas = os_list.filter(o =>
+    (o.tipo||'').toLowerCase().startsWith('corretiva') &&
+    o.status === 'Concluído' && o.tempoH > 0
+  );
+  const mttr = corretivas_concluidas.length
+    ? corretivas_concluidas.reduce((s,o) => s + (o.tempoH||0), 0) / corretivas_concluidas.length
+    : 0;
+
+  // Taxa corretiva sobre total de OS
+  const taxaCorretiva = total ? Math.round((corretivas / total) * 100) : 0;
 
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat t"><div class="stat-val">${total}</div><div class="stat-lbl">Total OS</div></div>
-    <div class="stat b"><div class="stat-val">${abertas}</div><div class="stat-lbl">Em Aberto</div></div>
+    <div class="stat y"><div class="stat-val">${emAndamento}</div><div class="stat-lbl">Em Andamento</div></div>
     <div class="stat gr"><div class="stat-val">${concluidas}</div><div class="stat-lbl">Concluídas</div></div>
     <div class="stat r"><div class="stat-val">${corretivas}</div><div class="stat-lbl">Corretivas</div></div>
     <div class="stat g"><div class="stat-val">${tempoTotal.toFixed(1)}</div><div class="stat-lbl">Horas de Manutenção</div></div>
