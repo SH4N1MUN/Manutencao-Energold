@@ -6,7 +6,7 @@ header.brand-header {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 300; /* acima da sidebar (100) e modais (200) */
+  z-index: 300;
   height: 64px;
   display: flex;
   align-items: center;
@@ -68,9 +68,12 @@ header.brand-header {
 ════════════════════════════════════════ */
 .app {
   display: flex;
-  min-height: calc(100vh - 64px);
-  /* margin-top afasta o .app do topo para não ficar sob o header fixed */
-  margin-top: 64px;
+  /* Ocupa exatamente o espaço abaixo do header */
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* ════════════════════════════════════════
@@ -79,20 +82,14 @@ header.brand-header {
 .sidebar {
   width: 220px;
   min-width: 220px;
+  flex-shrink: 0;
   background: var(--sidebar);
   display: flex;
   flex-direction: column;
-  padding: 0;
-  /* fixed: sidebar sempre visível, sem pulo durante scroll */
-  position: fixed;
-  top: 64px;
-  left: 0;
-  bottom: 0;
-  height: calc(100vh - 64px);
+  /* Sidebar ocupa altura total do .app (que já está fixed) */
+  height: 100%;
   overflow-y: auto;
-  /* Scroll suave dentro da sidebar quando itens excedem a altura */
   -webkit-overflow-scrolling: touch;
-  /* Garante que fique sobre o conteúdo */
   z-index: 100;
 }
 
@@ -161,11 +158,11 @@ header.brand-header {
 ════════════════════════════════════════ */
 .main {
   flex: 1;
-  padding: 28px 28px 72px;
-  /* margin-left igual à largura da sidebar (fixed) */
-  margin-left: 220px;
-  max-width: calc(100% - 220px);
   min-width: 0;
+  padding: 28px 28px 72px;
+  /* Só o main rola — sidebar e header ficam parados */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: fadeIn .25s ease both;
 }
 
@@ -310,9 +307,9 @@ header.brand-header {
 }
 
 .dev-footer {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 220px;
+  left: 0;
   right: 0;
   background: var(--bg2);
   border-top: 1px solid var(--bg4);
