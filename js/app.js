@@ -2160,6 +2160,11 @@ function limparDataRegistroEmTodas() {
 // GERAR TIMESTAMP PARA GOOGLE SHEETS
 // ════════════════════════════════════════════════════
 function gerarDataRegistroGoogle() {
-  // Formata como: 2026-04-11 23:49:11
-  return new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const data = new Date();
+  
+  // Subtrai 3 horas (em milissegundos) para forçar o fuso de Brasília no ISOString
+  const dataBrasilia = new Date(data.getTime() - (3 * 60 * 60 * 1000));
+  
+  // Formata como: YYYY-MM-DD HH:mm:ss
+  return dataBrasilia.toISOString().replace('T', ' ').substring(0, 19);
 }
