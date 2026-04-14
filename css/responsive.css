@@ -96,6 +96,12 @@ body {
     max-width: calc(100% - 200px);
   }
 
+  /* Sidebar menor no tablet — ajusta margin-top do app */
+  .app {
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
+  }
+
   /* Reduz sidebar no tablet */
   .sidebar {
     width: 200px;
@@ -129,11 +135,16 @@ body {
 
   /* ── HEADER ── */
   header.brand-header {
-    height: 56px;
-    padding: 0 14px 0 12px;
-    /* Garante que o header fique sobre o conteúdo com safe-area */
-    padding-top: var(--safe-top);
+    /* No mobile header também é fixed — mesma lógica do desktop */
     height: calc(56px + var(--safe-top));
+    padding: 0 14px 0 12px;
+    padding-top: var(--safe-top);
+  }
+
+  /* Compensa o header fixed no mobile — margin-top funciona melhor que padding-top em flex */
+  .app {
+    margin-top: calc(56px + var(--safe-top));
+    min-height: calc(100dvh - 56px - var(--safe-top));
   }
 
   .btn-menu {
@@ -201,7 +212,7 @@ body {
   /* ── SIDEBAR MOBILE — drawer lateral ── */
   .sidebar {
     position: fixed;
-    top: calc(56px + var(--safe-top));
+    top: calc(56px + var(--safe-top)); /* coincide com altura do header mobile */
     left: 0;
     bottom: 0;
     width: 260px;
