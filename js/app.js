@@ -1060,22 +1060,28 @@ function renderDash(){
 
   const recentes = [...os_list].reverse().slice(0,10);
   const tbody = document.getElementById('dash-tbody');
+
+  // Helper: extrai primeiro nome de uma string "NOME COMPLETO"
+  function primeiroNome(s){ return s ? String(s).split(' ')[0] : '—'; }
+
   if(!recentes.length){
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
     return;
   }
-  // Dashboard: 10 colunas (sem "Registrado por"/"Fechado por" — disponíveis no modal)
+  // Dashboard: 12 colunas — inclui "Registrado por" e "Fechado por" compactos
   tbody.innerHTML = recentes.map(o=>`<tr onclick="verOS('${o.id}')">
     <td><span class="os-num">${o.numero}</span></td>
-    <td>${o.tag}</td>
-    <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.equipamento||'—'}</td>
-    <td>${o.sistema||'—'}${o.componente ? ' / ' + o.componente : ''}</td>
-    <td>${o.mecanico||'—'}</td>
+    <td style="white-space:nowrap">${o.tag}</td>
+    <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${o.equipamento||''}">${o.equipamento||'—'}</td>
+    <td style="max-width:150px;white-space:normal;line-height:1.3;font-size:12px">${o.sistema||'—'}${o.componente ? ' / <span style="color:var(--steel)">' + o.componente + '</span>' : ''}</td>
+    <td style="font-size:12px">${o.mecanico||'—'}</td>
     <td>${tipoBadge(o.tipo)}</td>
     <td>${statusBadge(o.status)}</td>
-    <td>${fmtDT(o.inicio)}</td>
-    <td>${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
-    <td>${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
+    <td style="white-space:nowrap;font-size:12px">${fmtDT(o.inicio)}</td>
+    <td style="white-space:nowrap;font-size:12px">${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
+    <td style="white-space:nowrap;font-size:12px">${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
+    <td style="font-size:11.5px;color:var(--steel)" title="${o.registrado_por||'—'}">${primeiroNome(o.registrado_por)}</td>
+    <td style="font-size:11.5px;color:${o.fechado_por?'var(--green)':' var(--steel)'}" title="${o.fechado_por||'—'}">${o.fechado_por ? primeiroNome(o.fechado_por) : '<span style="opacity:.45">—</span>'}</td>
   </tr>`).join('');
 }
 
