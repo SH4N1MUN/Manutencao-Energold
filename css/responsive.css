@@ -91,9 +91,12 @@ body {
 @media (max-width: 1024px) {
   .main {
     padding: 20px 20px 72px;
+    /* Ajusta margin-left para sidebar menor no tablet */
+    margin-left: 200px;
+    max-width: calc(100% - 200px);
   }
 
-  /* Reduz padding da sidebar */
+  /* Reduz sidebar no tablet */
   .sidebar {
     width: 200px;
     min-width: 200px;
@@ -220,10 +223,12 @@ body {
     transform: translateX(0);
   }
 
-  /* ── MAIN — ocupa tela toda ── */
+  /* ── MAIN — ocupa tela toda (sidebar é drawer, não fixa) ── */
   .main {
-    padding: 16px 14px 80px; /* padding bottom generoso para o footer fixo */
+    padding: 16px 14px 80px;
     width: 100%;
+    max-width: 100%;
+    margin-left: 0;
     min-height: calc(100dvh - 56px);
   }
 
