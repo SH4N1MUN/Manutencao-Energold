@@ -284,31 +284,30 @@ tr:hover td {
   text-overflow: ellipsis;
 }
 
-/* col 6 — Tipo: permite quebra, fonte menor, largura contida */
+/* col 6 — Tipo: badge nunca quebra letra, célula pode truncar */
 #dash-table td:nth-child(6) {
-  white-space: normal;
-  word-break: break-word;
-  max-width: 90px;
-  line-height: 1.2;
+  max-width: 110px;
+  overflow: hidden;
 }
 #dash-table td:nth-child(6) .badge {
-  white-space: normal;
-  text-align: center;
-  line-height: 1.3;
-  display: inline-block;
+  white-space: nowrap;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-/* col 7 — Status: permite quebra */
+/* col 7 — Status: mesmo tratamento */
 #dash-table td:nth-child(7) {
-  white-space: normal;
-  word-break: break-word;
-  max-width: 80px;
+  max-width: 90px;
+  overflow: hidden;
 }
 #dash-table td:nth-child(7) .badge {
-  white-space: normal;
-  text-align: center;
-  line-height: 1.3;
-  display: inline-block;
+  white-space: nowrap;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* col 8, 9 — Início / Fim: fonte menor, não quebra */
