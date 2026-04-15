@@ -863,7 +863,17 @@ async function salvarOS(e){
   setEditingOS(false);
   resetForm();
   renderDash();
-  showPage('lista-os');
+
+  // Abre modal de assinatura (opcional — pode pular)
+  // Busca a OS salva para ter o objeto completo
+  const osSalva = os_list.find(o => o.id === os.id) || os;
+  abrirModalAssinatura(osSalva, function(osComSig) {
+    // Persiste assinaturas no localStorage (não vai ao Sheets — imagens base64)
+    if (osComSig.assinatura_executor || osComSig.assinatura_sondador) {
+      upsertOSLocal(osComSig);
+    }
+    showPage('lista-os');
+  });
 }
 
 function editarOS(id){
@@ -1152,11 +1162,237 @@ function verOS(id){
       <div class="di"><label style="color:#036AAB">🖊 Registrado por</label><p style="font-weight:600">${os.registrado_por||'—'}</p></div>
       <div class="di"><label style="color:${os.fechado_por?'#1A9B6C':'#999'}">✅ Fechado por</label><p style="font-weight:600">${os.fechado_por||'—'}</p></div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+      <div style="border:1px solid var(--bg4);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--steel);margin-bottom:8px">
+          Assinatura — Executor<br><span style="font-weight:400;text-transform:none;letter-spacing:0">${os.mecanico||''}</span>
+        </div>
+        ${os.assinatura_executor
+          ? `<img src="${os.assinatura_executor}" style="max-width:100%;height:80px;object-fit:contain;display:block;margin:0 auto">`
+          : `<div style="height:60px;display:flex;align-items:center;justify-content:center;color:var(--steel);font-size:12px;opacity:.5">
+               <button class="btn btn-ghost btn-sm" onclick="assinarOS('${os.id}','executor')">✍ Assinar agora</button>
+             </div>`}
+      </div>
+      <div style="border:1px solid var(--bg4);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--steel);margin-bottom:8px">
+          Assinatura — Sondador<br><span style="font-weight:400;text-transform:none;letter-spacing:0">${os.sondador||'—'}</span>
+        </div>
+        ${os.assinatura_sondador
+          ? `<img src="${os.assinatura_sondador}" style="max-width:100%;height:80px;object-fit:contain;display:block;margin:0 auto">`
+          : `<div style="height:60px;display:flex;align-items:center;justify-content:center;color:var(--steel);font-size:12px;opacity:.5">
+               ${os.sondador ? `<button class="btn btn-ghost btn-sm" onclick="assinarOS('${os.id}','sondador')">✍ Assinar agora</button>` : '<span>Sem sondador</span>'}
+             </div>`}
+      </div>
+    </div>
   `;
   document.getElementById('modal-overlay').classList.add('open');
 }
 function fecharModalExt(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+/* Assinar OS depois — chamado pelo botão "✍ Assinar agora" no modal */
+function assinarOS(id, quem) {
+  const os = os_list.find(o => o.id === id);
+  if (!os) return;
+  closeModal();
+  const etapas = quem === 'executor'
+    ? [{ campo: 'assinatura_executor', label: 'Executor', nome: os.mecanico || 'Executor' }]
+    : [{ campo: 'assinatura_sondador', label: 'Sondador', nome: os.sondador || 'Sondador' }];
+
+  _executarEtapaAssinatura(os, etapas, 0, function(osComSig) {
+    if (osComSig.assinatura_executor || osComSig.assinatura_sondador) {
+      upsertOSLocal(osComSig);
+    }
+    verOS(id); // Reabre o modal com a assinatura salva
+  });
+}
 function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); currentModal=null; }
+
+
+// ════════════════════════════════════════════════════
+// ASSINATURA DIGITAL — Canvas touch/mouse
+// Salva localmente no objeto da OS (base64 PNG)
+// Opcional: pode pular e assinar depois via modal
+// ════════════════════════════════════════════════════
+
+let _sigResolve = null; // Promise resolver do modal de assinatura
+
+/* Abre o modal de assinatura em sequência: executor → sondador */
+function abrirModalAssinatura(os, onConcluido) {
+  const etapas = [];
+  etapas.push({ campo: 'assinatura_executor', label: 'Executor', nome: os.mecanico || 'Executor' });
+  if (os.sondador) {
+    etapas.push({ campo: 'assinatura_sondador', label: 'Sondador', nome: os.sondador });
+  }
+  _executarEtapaAssinatura(os, etapas, 0, onConcluido);
+}
+
+function _executarEtapaAssinatura(os, etapas, idx, onConcluido) {
+  if (idx >= etapas.length) {
+    // Todas assinaturas coletadas
+    fecharSigModal();
+    if (onConcluido) onConcluido(os);
+    return;
+  }
+
+  const etapa = etapas[idx];
+  const overlay = document.getElementById('sig-overlay');
+  const title   = document.getElementById('sig-title');
+  const nome    = document.getElementById('sig-nome');
+  const counter = document.getElementById('sig-counter');
+  const canvas  = document.getElementById('sig-canvas');
+
+  title.textContent   = `Assinatura — ${etapa.label}`;
+  nome.textContent    = etapa.nome;
+  counter.textContent = `${idx + 1} de ${etapas.length}`;
+
+  // Limpa canvas
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Mostra o overlay
+  overlay.classList.add('open');
+
+  // Botão confirmar
+  document.getElementById('sig-confirmar').onclick = () => {
+    const dataUrl = canvas.toDataURL('image/png');
+    const vazio   = _canvasVazio(canvas);
+    if (vazio) {
+      // Assinatura em branco — confirma se quer pular
+      if (!confirm(`${etapa.label} não assinou. Pular esta assinatura?`)) return;
+      os[etapa.campo] = null;
+    } else {
+      os[etapa.campo] = dataUrl;
+    }
+    _executarEtapaAssinatura(os, etapas, idx + 1, onConcluido);
+  };
+
+  // Botão pular tudo
+  document.getElementById('sig-pular').onclick = () => {
+    fecharSigModal();
+    if (onConcluido) onConcluido(os);
+  };
+
+  // Botão limpar canvas
+  document.getElementById('sig-limpar').onclick = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  // Inicializa o desenho
+  _initCanvas(canvas);
+}
+
+function fecharSigModal() {
+  const overlay = document.getElementById('sig-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function _canvasVazio(canvas) {
+  const ctx  = canvas.getContext('2d');
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 10) return false; // Tem pixel não-transparente
+  }
+  return true;
+}
+
+function _initCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#0B1E3D';
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top)  * scaleY,
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top)  * scaleY,
+    };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    drawing = true;
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+
+  function stop(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    drawing = false;
+    ctx.closePath();
+  }
+
+  // Remove listeners antigos clonando o canvas
+  const newCanvas = canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(newCanvas, canvas);
+  newCanvas.id = 'sig-canvas';
+
+  const nc  = newCanvas;
+  const nctx = nc.getContext('2d');
+  nctx.strokeStyle = '#0B1E3D';
+  nctx.lineWidth   = 2.5;
+  nctx.lineCap     = 'round';
+  nctx.lineJoin    = 'round';
+
+  let d = false, lx = 0, ly = 0;
+
+  function s(e){ e.preventDefault(); d=true; const p=getPos2(e,nc); lx=p.x;ly=p.y; nctx.beginPath(); nctx.moveTo(lx,ly); }
+  function m(e){ if(!d) return; e.preventDefault(); const p=getPos2(e,nc); nctx.lineTo(p.x,p.y); nctx.stroke(); lx=p.x;ly=p.y; }
+  function en(e){ if(!d) return; e.preventDefault(); d=false; nctx.closePath(); }
+
+  nc.addEventListener('mousedown',  s);
+  nc.addEventListener('mousemove',  m);
+  nc.addEventListener('mouseup',    en);
+  nc.addEventListener('mouseleave', en);
+  nc.addEventListener('touchstart', s, { passive: false });
+  nc.addEventListener('touchmove',  m, { passive: false });
+  nc.addEventListener('touchend',   en, { passive: false });
+
+  // Atualiza referência do botão limpar
+  document.getElementById('sig-limpar').onclick = () => {
+    nctx.clearRect(0, 0, nc.width, nc.height);
+  };
+}
+
+function getPos2(e, canvas) {
+  const rect   = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  if (e.touches) {
+    return {
+      x: (e.touches[0].clientX - rect.left) * scaleX,
+      y: (e.touches[0].clientY - rect.top)  * scaleY,
+    };
+  }
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top)  * scaleY,
+  };
+}
 
 // ════════════════════════════════════════════════════
 // IMPRESSÃO / PDF — Layout compacto A4 retrato
@@ -1551,11 +1787,15 @@ body {
     <!-- Assinaturas -->
     <div class="signs">
       <div class="sign">
-        <div style="height:20px"></div>
+        ${os.assinatura_executor
+          ? `<img src="${os.assinatura_executor}" style="height:48px;max-width:180px;object-fit:contain;display:block;margin:0 auto 4px">`
+          : '<div style="height:48px"></div>'}
         Assinatura do Executor<br><strong>${esc(os.mecanico)}</strong>
       </div>
       <div class="sign">
-        <div style="height:20px"></div>
+        ${os.assinatura_sondador
+          ? `<img src="${os.assinatura_sondador}" style="height:48px;max-width:180px;object-fit:contain;display:block;margin:0 auto 4px">`
+          : '<div style="height:48px"></div>'}
         Assinatura do Sondador<br><strong>${esc(os.sondador||'—')}</strong>
       </div>
     </div>
