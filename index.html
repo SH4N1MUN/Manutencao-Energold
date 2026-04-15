@@ -45,6 +45,26 @@
 ══════════════════════════════════════ -->
 <div id="login-screen" class="hidden" role="main" aria-label="Tela de login">
   <div class="login-bg" aria-hidden="true"></div>
+
+  <!-- Anéis decorativos de precisão -->
+  <div class="login-ring login-ring-1" aria-hidden="true"></div>
+  <div class="login-ring login-ring-2" aria-hidden="true"></div>
+  <div class="login-ring login-ring-3" aria-hidden="true"></div>
+  <div class="login-ring login-ring-4" aria-hidden="true"></div>
+
+  <!-- Linhas de detalhe técnico -->
+  <div class="login-line login-line-h" aria-hidden="true"></div>
+  <div class="login-line login-line-v" aria-hidden="true"></div>
+
+  <!-- Pontos de coordenada -->
+  <div class="login-dot login-dot-1" aria-hidden="true"></div>
+  <div class="login-dot login-dot-2" aria-hidden="true"></div>
+  <div class="login-dot login-dot-3" aria-hidden="true"></div>
+
+  <!-- Cruzes de mira -->
+  <div class="login-cross login-cross-1" aria-hidden="true"></div>
+  <div class="login-cross login-cross-2" aria-hidden="true"></div>
+
   <div class="login-card">
     <img id="login-logo-img" src="" alt="Energold Drilling Brasil" class="login-logo">
     <div class="login-subtitle">Controle de Manutenção · Acesso ao Sistema</div>
@@ -52,10 +72,6 @@
     <div id="login-error" class="login-error" role="alert" aria-live="assertive">Usuário ou senha incorretos.</div>
     <div class="login-field">
       <label for="login-user">Usuário</label>
-      <!--
-        CORREÇÃO: autocapitalize="none" e spellcheck="false" evitam
-        comportamentos indesejados do teclado mobile no campo de usuário
-      -->
       <input
         type="text"
         id="login-user"
@@ -76,10 +92,6 @@
         autocomplete="current-password"
       >
     </div>
-    <!--
-      CORREÇÃO: type="button" explicito no login-btn para evitar
-      submit duplo em formulários implícitos
-    -->
     <button class="login-btn" id="login-btn" type="button" onclick="doLogin()">Entrar</button>
     <div class="login-footer">Sistema ENERGOLD · Desenvolvido por Gabriel Felipe dos Santos © 2026</div>
   </div>
