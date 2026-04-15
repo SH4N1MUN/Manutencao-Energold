@@ -1061,7 +1061,6 @@ function renderLista(){
   if(btnExport) btnExport.style.display = (currentUser && currentUser.perms.exportar) ? '' : 'none';
 
   let lista = [...os_list].reverse();
-  console.log('[renderLista] os_list.length:', os_list.length, '| lista inicial:', lista.length);
   if(q) lista = lista.filter(o=>[o.numero,o.tag,o.mecanico,o.sistema,o.componente,o.equipamento,o.servico,o.local].join(' ').toLowerCase().includes(q));
   if(tipo) lista = lista.filter(o=>o.tipo===tipo);
   if(status) lista = lista.filter(o=>o.status===status);
@@ -1074,8 +1073,6 @@ function renderLista(){
   if(!lista.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
 
-  // try/catch para capturar erros silenciosos no template literal
-  try {
   tbody.innerHTML = lista.map(o=>`<tr>
     <td onclick="verOS('${o.id}')"><span class="os-num">${o.numero}</span></td>
     <td>${o.tag||'—'}</td>
@@ -1108,12 +1105,6 @@ function renderLista(){
       ${currentUser && currentUser.perms.excluir ? `<button class="btn btn-red btn-xs" onclick="excluirOS('${o.id}')">🗑</button>` : ''}
     </td>
   </tr>`).join('');
-  } catch(err) {
-    console.error('[renderLista] Erro ao renderizar:', err);
-    tbody.innerHTML = `<tr><td colspan="18" style="text-align:center;padding:20px;color:var(--red)">
-      Erro ao carregar lista: ${err.message}. Verifique o console (F12).
-    </td></tr>`;
-  }
 }
 
 // ════════════════════════════════════════════════════
