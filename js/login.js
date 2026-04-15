@@ -119,7 +119,13 @@ function enterSystem() {
   applyPermissions();
   if (typeof populateSelects === 'function') populateSelects();
   if (typeof populatePerfilSelects === 'function') populatePerfilSelects();
-  // Re-executa o init do sistema (caso já tenha rodado antes do login)
+
+  // Notifica o app.js que a autenticação foi concluída.
+  // O DOMContentLoaded do app.js aguarda este evento antes de
+  // carregar dados da API e renderizar as telas.
+  document.dispatchEvent(new CustomEvent('energold:login'));
+
+  // Re-executa renders caso o app.js já tenha rodado (fallback)
   if (typeof renderDash === 'function') renderDash();
   if (typeof populateFiltros === 'function') populateFiltros();
   if (typeof renderLista === 'function') renderLista();
