@@ -835,7 +835,9 @@ async function salvarOS(e){
       componente: os.componente,
       servico: os.servico,
       observacao: os.obs,
-      assinada: os.assinada
+      assinada: os.assinada,
+      assinatura_executor: os.assinatura_executor || null,
+      assinatura_sondador: os.assinatura_sondador || null,
     };
     const g = await apiPost('salvarOS', googlePayload);
     googleOk = !!(g && g.success);
@@ -865,13 +867,30 @@ async function salvarOS(e){
   renderDash();
 
   // Abre modal de assinatura (opcional — pode pular)
-  // Busca a OS salva para ter o objeto completo
   const osSalva = os_list.find(o => o.id === os.id) || os;
-  abrirModalAssinatura(osSalva, function(osComSig) {
-    // Persiste assinaturas no localStorage (não vai ao Sheets — imagens base64)
+  abrirModalAssinatura(osSalva, async function(osComSig) {
+    // Persiste assinaturas localmente
     if (osComSig.assinatura_executor || osComSig.assinatura_sondador) {
       upsertOSLocal(osComSig);
     }
+
+    // Se houver assinaturas E a OS já foi enviada ao Sheets com sucesso,
+    // reenvia a OS completa com as assinaturas incluídas
+    if (navigator.onLine &&
+        (osComSig.assinatura_executor || osComSig.assinatura_sondador) &&
+        osComSig.syncStatus === 'synced') {
+      try {
+        await apiPost('salvarOS', {
+          id: osComSig.id,
+          numero_os: osComSig.numero,
+          assinatura_executor: osComSig.assinatura_executor || null,
+          assinatura_sondador: osComSig.assinatura_sondador || null,
+        });
+      } catch(e) {
+        console.warn('Falha ao atualizar assinaturas no Sheets:', e);
+      }
+    }
+
     showPage('lista-os');
   });
 }
@@ -1201,6 +1220,20 @@ function assinarOS(id, quem) {
   _executarEtapaAssinatura(os, etapas, 0, function(osComSig) {
     if (osComSig.assinatura_executor || osComSig.assinatura_sondador) {
       upsertOSLocal(osComSig);
+      // Reenvia a OS completa com as assinaturas para o Sheets
+      if (navigator.onLine) {
+        try {
+          await apiPost('salvarOS', {
+            id: osComSig.id,
+            numero_os: osComSig.numero,
+            assinatura_executor: osComSig.assinatura_executor || null,
+            assinatura_sondador: osComSig.assinatura_sondador || null,
+          });
+          toast('Assinatura salva na planilha! ✓');
+        } catch(e) {
+          toast('Assinatura salva localmente. Sync pendente.', true);
+        }
+      }
     }
     verOS(id); // Reabre o modal com a assinatura salva
   });
