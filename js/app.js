@@ -946,6 +946,22 @@ async function excluirOS(id){
 // ════════════════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════════════════
+// Helper global: extrai primeiro nome de "NOME COMPLETO"
+function primeiroNome(s){ return s ? String(s).split(' ')[0] : '—'; }
+
+// Helper global: formata data/hora curta sem conversão de timezone
+function fmtDTcurto(dt){
+  if(!dt) return '';
+  const s = String(dt).trim();
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})[\s,T](\d{2}):(\d{2})/);
+  if(br) return `${br[1]}/${br[2]}, ${br[4]}:${br[5]}`;
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/);
+  if(iso) return `${iso[3]}/${iso[2]}, ${iso[4]}:${iso[5]}`;
+  const d = new Date(s);
+  if(isNaN(d)) return '';
+  return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
 function renderDash(){
   const total      = os_list.length;
   const concluidas = os_list.filter(o => o.status === 'Concluído').length;
@@ -983,17 +999,6 @@ function renderDash(){
 
   const recentes = [...os_list].reverse().slice(0,10);
   const tbody = document.getElementById('dash-tbody');
-
-  // Helper: extrai primeiro nome de uma string "NOME COMPLETO"
-  function primeiroNome(s){ return s ? String(s).split(' ')[0] : '—'; }
-
-  // Formata data/hora curta: "13/04 14:32"
-  function fmtDTcurto(dt){
-    if(!dt) return '';
-    const d = parseDateLocal(dt);
-    if(!d || isNaN(d)) return '';
-    return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  }
 
   if(!recentes.length){
     tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--steel);padding:30px">Nenhuma OS registrada ainda.</td></tr>`;
@@ -2217,40 +2222,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch(e) { return false; }
   };
 
-  // Sempre aguarda o evento energold:login que o enterSystem() dispara.
-  // Com sessão salva: login.js restaura rápido (~0ms), timeout de 4s é segurança.
-  // Sem sessão: aguarda login manual (sem timeout — não faz sentido continuar).
+  // Aguarda autenticação: enterSystem() no login.js dispara energold:login.
+  // Sem sessão: aguarda login manual. Com sessão: login.js restaura e dispara.
   await new Promise(resolve => {
     document.addEventListener('energold:login', resolve, { once: true });
-    if (_temSessao()) {
-      // Tem sessão — timeout de segurança caso o evento demore
-      setTimeout(resolve, 4000);
-    }
+    // Timeout de segurança só se já tem sessão salva
+    if (_temSessao()) setTimeout(resolve, 4000);
   });
 
-  if(navigator.onLine){
-    try {
-      await enviarPendentesOS();
-    } catch(e) {
-      console.warn('Falha ao enviar pendentes na inicialização:', e);
-    }
-  }
-
-  const synced = await carregarOSGoogle(true, { source: 'init', forceRefreshActivePage: true });
-
-  if(!synced){
-    os_list = mergeOSLists([], os_list, os_pending);
-    save();
-    atualizarProximoNumeroComBaseNaLista();
-  }
-
+  // Carrega dados da API em background (os_list já vem do localStorage)
   seedPerfis();
   sincronizarPerfisNaOS();
   limparDataRegistroEmTodas();
-  renderDash();
+
+  if(navigator.onLine){
+    try { await enviarPendentesOS(); } catch(e) {}
+    try {
+      await carregarOSGoogle(true, { source: 'init', forceRefreshActivePage: true });
+    } catch(e) {
+      console.warn('Falha ao carregar OS da API:', e);
+    }
+  }
+
   populateSelects();
   populatePerfilSelects();
-
   startAutoRefreshLoop();
   setInterval(garantirAssinaturaDev, 3000);
 });
