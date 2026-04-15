@@ -1228,171 +1228,117 @@ function abrirModalAssinatura(os, onConcluido) {
 
 function _executarEtapaAssinatura(os, etapas, idx, onConcluido) {
   if (idx >= etapas.length) {
-    // Todas assinaturas coletadas
     fecharSigModal();
     if (onConcluido) onConcluido(os);
     return;
   }
 
-  const etapa = etapas[idx];
+  const etapa   = etapas[idx];
   const overlay = document.getElementById('sig-overlay');
-  const title   = document.getElementById('sig-title');
-  const nome    = document.getElementById('sig-nome');
-  const counter = document.getElementById('sig-counter');
-  const canvas  = document.getElementById('sig-canvas');
 
-  title.textContent   = `Assinatura — ${etapa.label}`;
-  nome.textContent    = etapa.nome;
-  counter.textContent = `${idx + 1} de ${etapas.length}`;
+  document.getElementById('sig-title').textContent   = `Assinatura — ${etapa.label}`;
+  document.getElementById('sig-nome').textContent    = etapa.nome;
+  document.getElementById('sig-counter').textContent = `${idx + 1} de ${etapas.length}`;
 
-  // Limpa canvas
-  const ctx = canvas.getContext('2d');
+  const hint = document.getElementById('sig-empty-hint');
+  if (hint) hint.style.display = 'none';
+
+  // Pega o canvas e limpa
+  const canvas = document.getElementById('sig-canvas');
+  const ctx    = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Mostra o overlay
+  // Configura estilo de desenho
+  ctx.strokeStyle = '#0B1E3D';
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+
   overlay.classList.add('open');
 
-  // Botão confirmar
+  // ── Lógica de desenho direta no canvas (sem clone) ──
+  let drawing = false;
+
+  function getPos(e) {
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const src    = e.touches ? e.touches[0] : e;
+    return {
+      x: (src.clientX - rect.left) * scaleX,
+      y: (src.clientY - rect.top)  * scaleY,
+    };
+  }
+
+  function onStart(e) { e.preventDefault(); drawing=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+  function onMove(e)  { if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }
+  function onEnd(e)   { e.preventDefault(); drawing=false; ctx.closePath(); }
+
+  // Remove listeners anteriores clonando só o nó (sem conteúdo do canvas)
+  const fresh = document.createElement('canvas');
+  fresh.id     = 'sig-canvas';
+  fresh.width  = canvas.width;
+  fresh.height = canvas.height;
+  canvas.parentNode.replaceChild(fresh, canvas);
+
+  const fc   = fresh;
+  const fctx = fc.getContext('2d');
+  fctx.strokeStyle = '#0B1E3D';
+  fctx.lineWidth   = 2.5;
+  fctx.lineCap     = 'round';
+  fctx.lineJoin    = 'round';
+
+  let dr = false;
+
+  function fp(e) {
+    const rect   = fc.getBoundingClientRect();
+    const scaleX = fc.width  / rect.width;
+    const scaleY = fc.height / rect.height;
+    const src    = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX-rect.left)*scaleX, y: (src.clientY-rect.top)*scaleY };
+  }
+
+  fc.addEventListener('mousedown',  e => { e.preventDefault(); dr=true; const p=fp(e); fctx.beginPath(); fctx.moveTo(p.x,p.y); });
+  fc.addEventListener('mousemove',  e => { if(!dr) return; e.preventDefault(); const p=fp(e); fctx.lineTo(p.x,p.y); fctx.stroke(); });
+  fc.addEventListener('mouseup',    e => { e.preventDefault(); dr=false; fctx.closePath(); });
+  fc.addEventListener('mouseleave', e => { if(dr){ e.preventDefault(); dr=false; fctx.closePath(); } });
+  fc.addEventListener('touchstart', e => { e.preventDefault(); dr=true; const p=fp(e); fctx.beginPath(); fctx.moveTo(p.x,p.y); }, { passive:false });
+  fc.addEventListener('touchmove',  e => { if(!dr) return; e.preventDefault(); const p=fp(e); fctx.lineTo(p.x,p.y); fctx.stroke(); }, { passive:false });
+  fc.addEventListener('touchend',   e => { e.preventDefault(); dr=false; fctx.closePath(); }, { passive:false });
+
+  // ── Botões ──
+  document.getElementById('sig-limpar').onclick = () => {
+    fctx.clearRect(0, 0, fc.width, fc.height);
+  };
+
   document.getElementById('sig-confirmar').onclick = () => {
-    const dataUrl = canvas.toDataURL('image/png');
-    const vazio   = _canvasVazio(canvas);
-    if (vazio) {
-      // Assinatura em branco — confirma se quer pular
-      if (!confirm(`${etapa.label} não assinou. Pular esta assinatura?`)) return;
-      os[etapa.campo] = null;
-    } else {
-      os[etapa.campo] = dataUrl;
+    // Verifica se tem traço (pixel não transparente)
+    const data = fctx.getImageData(0, 0, fc.width, fc.height).data;
+    let temTraco = false;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] > 10) { temTraco = true; break; }
     }
+    if (!temTraco) {
+      const hint = document.getElementById('sig-empty-hint');
+      if (hint) { hint.style.display = 'block'; setTimeout(() => hint.style.display = 'none', 3000); }
+      return;
+    }
+    os[etapa.campo] = fc.toDataURL('image/png');
     _executarEtapaAssinatura(os, etapas, idx + 1, onConcluido);
   };
 
-  // Botão pular tudo
   document.getElementById('sig-pular').onclick = () => {
     fecharSigModal();
     if (onConcluido) onConcluido(os);
   };
-
-  // Botão limpar canvas
-  document.getElementById('sig-limpar').onclick = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
-
-  // Inicializa o desenho
-  _initCanvas(canvas);
 }
+
 
 function fecharSigModal() {
   const overlay = document.getElementById('sig-overlay');
   if (overlay) overlay.classList.remove('open');
 }
 
-function _canvasVazio(canvas) {
-  const ctx  = canvas.getContext('2d');
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  for (let i = 3; i < data.length; i += 4) {
-    if (data[i] > 10) return false; // Tem pixel não-transparente
-  }
-  return true;
-}
-
-function _initCanvas(canvas) {
-  const ctx = canvas.getContext('2d');
-  ctx.strokeStyle = '#0B1E3D';
-  ctx.lineWidth   = 2.5;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  let drawing = false;
-  let lastX = 0, lastY = 0;
-
-  function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width  / rect.width;
-    const scaleY = canvas.height / rect.height;
-    if (e.touches) {
-      return {
-        x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top)  * scaleY,
-      };
-    }
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top)  * scaleY,
-    };
-  }
-
-  function start(e) {
-    e.preventDefault();
-    drawing = true;
-    const p = getPos(e);
-    lastX = p.x; lastY = p.y;
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-  }
-
-  function draw(e) {
-    if (!drawing) return;
-    e.preventDefault();
-    const p = getPos(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    lastX = p.x; lastY = p.y;
-  }
-
-  function stop(e) {
-    if (!drawing) return;
-    e.preventDefault();
-    drawing = false;
-    ctx.closePath();
-  }
-
-  // Remove listeners antigos clonando o canvas
-  const newCanvas = canvas.cloneNode(true);
-  canvas.parentNode.replaceChild(newCanvas, canvas);
-  newCanvas.id = 'sig-canvas';
-
-  const nc  = newCanvas;
-  const nctx = nc.getContext('2d');
-  nctx.strokeStyle = '#0B1E3D';
-  nctx.lineWidth   = 2.5;
-  nctx.lineCap     = 'round';
-  nctx.lineJoin    = 'round';
-
-  let d = false, lx = 0, ly = 0;
-
-  function s(e){ e.preventDefault(); d=true; const p=getPos2(e,nc); lx=p.x;ly=p.y; nctx.beginPath(); nctx.moveTo(lx,ly); }
-  function m(e){ if(!d) return; e.preventDefault(); const p=getPos2(e,nc); nctx.lineTo(p.x,p.y); nctx.stroke(); lx=p.x;ly=p.y; }
-  function en(e){ if(!d) return; e.preventDefault(); d=false; nctx.closePath(); }
-
-  nc.addEventListener('mousedown',  s);
-  nc.addEventListener('mousemove',  m);
-  nc.addEventListener('mouseup',    en);
-  nc.addEventListener('mouseleave', en);
-  nc.addEventListener('touchstart', s, { passive: false });
-  nc.addEventListener('touchmove',  m, { passive: false });
-  nc.addEventListener('touchend',   en, { passive: false });
-
-  // Atualiza referência do botão limpar
-  document.getElementById('sig-limpar').onclick = () => {
-    nctx.clearRect(0, 0, nc.width, nc.height);
-  };
-}
-
-function getPos2(e, canvas) {
-  const rect   = canvas.getBoundingClientRect();
-  const scaleX = canvas.width  / rect.width;
-  const scaleY = canvas.height / rect.height;
-  if (e.touches) {
-    return {
-      x: (e.touches[0].clientX - rect.left) * scaleX,
-      y: (e.touches[0].clientY - rect.top)  * scaleY,
-    };
-  }
-  return {
-    x: (e.clientX - rect.left) * scaleX,
-    y: (e.clientY - rect.top)  * scaleY,
-  };
-}
 
 // ════════════════════════════════════════════════════
 // IMPRESSÃO / PDF — Layout compacto A4 retrato
