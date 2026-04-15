@@ -2208,14 +2208,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   garantirAssinaturaDev();
 
   // Aguarda autenticação antes de carregar dados da API.
-  // O login.js dispara 'energold:login' via enterSystem() quando o usuário
-  // está autenticado (sessão restaurada ou login manual bem-sucedido).
-  // Se currentUser já existe (definido antes deste listener), roda direto.
-  if (!currentUser) {
-    await new Promise(resolve => {
-      document.addEventListener('energold:login', resolve, { once: true });
-    });
-  }
+  // currentUser é declarado no login.js (carregado depois do app.js),
+  // então verifica o localStorage diretamente para não depender da variável.
+  const _temSessao = () => {
+    try {
+      const s = JSON.parse(localStorage.getItem('eg_session_v2') || 'null');
+      return !!(s && s.usuario && s.hash);
+    } catch(e) { return false; }
+  };
+
+  // Sempre aguarda o evento energold:login que o enterSystem() dispara.
+  // Com sessão salva: login.js restaura rápido (~0ms), timeout de 4s é segurança.
+  // Sem sessão: aguarda login manual (sem timeout — não faz sentido continuar).
+  await new Promise(resolve => {
+    document.addEventListener('energold:login', resolve, { once: true });
+    if (_temSessao()) {
+      // Tem sessão — timeout de segurança caso o evento demore
+      setTimeout(resolve, 4000);
+    }
+  });
 
   if(navigator.onLine){
     try {
