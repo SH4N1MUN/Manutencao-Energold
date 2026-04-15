@@ -766,3 +766,99 @@ textarea        { resize: vertical; min-height: 72px; }
   line-height: 1.2;
   white-space: nowrap;
 }
+
+/* ════════════════════════════════════════
+   MODAL DE ASSINATURA DIGITAL
+════════════════════════════════════════ */
+.sig-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11,30,61,.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.sig-overlay.open { display: flex; }
+
+.sig-modal {
+  background: var(--bg2);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--bg4);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 560px;
+  padding: 24px;
+  animation: scaleIn .2s ease both;
+}
+
+.sig-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.sig-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sidebar);
+}
+
+.sig-nome {
+  font-size: 12px;
+  color: var(--steel);
+  margin-top: 2px;
+}
+
+.sig-counter {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--steel);
+  background: var(--bg3);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.sig-hint {
+  font-size: 12px;
+  color: var(--steel);
+  margin-bottom: 12px;
+  opacity: .7;
+}
+
+.sig-canvas-wrap {
+  border: 1.5px dashed var(--bg4);
+  border-radius: var(--r-lg);
+  background: #fff;
+  overflow: hidden;
+  cursor: crosshair;
+  /* Evita scroll ao desenhar no mobile */
+  touch-action: none;
+}
+
+.sig-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.sig-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .sig-modal { padding: 18px 16px; }
+  .sig-actions { flex-direction: column; gap: 10px; }
+  .sig-actions > div { width: 100%; display: flex; gap: 8px; }
+  .sig-actions .btn { flex: 1; justify-content: center; }
+}
