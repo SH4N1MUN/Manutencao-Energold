@@ -2207,6 +2207,16 @@ function stopAutoRefreshLoop(){
 document.addEventListener('DOMContentLoaded', async () => {
   garantirAssinaturaDev();
 
+  // Aguarda autenticação antes de carregar dados da API.
+  // O login.js dispara 'energold:login' via enterSystem() quando o usuário
+  // está autenticado (sessão restaurada ou login manual bem-sucedido).
+  // Se currentUser já existe (definido antes deste listener), roda direto.
+  if (!currentUser) {
+    await new Promise(resolve => {
+      document.addEventListener('energold:login', resolve, { once: true });
+    });
+  }
+
   if(navigator.onLine){
     try {
       await enviarPendentesOS();
