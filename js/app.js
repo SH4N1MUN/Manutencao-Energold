@@ -1008,10 +1008,10 @@ function renderDash(){
     <td style="font-size:12px">${o.mecanico||'—'}</td>
     <td>${tipoBadge(o.tipo)}</td>
     <td>${statusBadge(o.status)}</td>
-    <td style="min-width:130px;padding:8px 10px">${slaBadge(o)}</td>
     <td style="white-space:nowrap;font-size:12px">${fmtDT(o.inicio)}</td>
     <td style="white-space:nowrap;font-size:12px">${o.termino ? fmtDT(o.termino) : '<span style="color:var(--yellow);font-size:11px">Em andamento</span>'}</td>
     <td style="white-space:nowrap;font-size:12px">${o.tempoH ? o.tempoH.toFixed(2) : '—'}</td>
+    <td style="min-width:130px;padding:8px 10px">${slaBadge(o)}</td>
     <td style="color:var(--steel);line-height:1.25">
       <span style="font-size:11.5px;display:block" title="${o.registrado_por||'—'}">${primeiroNome(o.registrado_por)}</span>
       ${fmtDTcurto(o.data_registro) ? `<span style="font-size:10px;opacity:.6;display:block">${fmtDTcurto(o.data_registro)}</span>` : ''}
@@ -1083,6 +1083,16 @@ function renderLista(){
     <td>${o.horimetroAtual!=null ? o.horimetroAtual : '—'}</td>
     <td>${statusBadge(o.status)}</td>
     <td style="min-width:130px;padding:8px 10px">${slaBadge(o)}</td>
+    <td style="color:var(--steel);line-height:1.25">
+      <span style="font-size:11.5px;display:block" title="${o.registrado_por||'—'}">${primeiroNome(o.registrado_por)}</span>
+      ${fmtDTcurto(o.data_registro) ? `<span style="font-size:10px;opacity:.6;display:block">${fmtDTcurto(o.data_registro)}</span>` : ''}
+    </td>
+    <td style="color:${o.fechado_por?'var(--green)':'var(--steel)'};line-height:1.25">
+      ${o.fechado_por
+        ? `<span style="font-size:11.5px;display:block" title="${o.fechado_por}">${primeiroNome(o.fechado_por)}</span>
+           <span style="font-size:10px;opacity:.6;display:block">${fmtDTcurto(o.updated_at)||''}</span>`
+        : '<span style="opacity:.35;font-size:11.5px">—</span>'}
+    </td>
     <td style="white-space:nowrap">
       <button class="btn btn-ghost btn-xs" onclick="verOS('${o.id}')">👁</button>
       ${currentUser && currentUser.perms.editar ? `<button class="btn btn-ghost btn-xs" onclick="editarOS('${o.id}')">✏</button>` : ''}
