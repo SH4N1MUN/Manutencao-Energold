@@ -32,11 +32,11 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
 
   <!-- CSS (ordem importa: base → layout → components → login → responsive) -->
-  <link rel="stylesheet" href="./css/base.css">
-  <link rel="stylesheet" href="./css/layout.css">
-  <link rel="stylesheet" href="./css/components.css">
-  <link rel="stylesheet" href="./css/login.css">
-  <link rel="stylesheet" href="./css/responsive.css">
+  <link rel="stylesheet" href="./css/base.css?v=2">
+  <link rel="stylesheet" href="./css/layout.css?v=2">
+  <link rel="stylesheet" href="./css/components.css?v=2">
+  <link rel="stylesheet" href="./css/login.css?v=2">
+  <link rel="stylesheet" href="./css/responsive.css?v=2">
 </head>
 <body>
 
@@ -797,13 +797,43 @@
 <!-- ══════════════════════════════════════
      SCRIPTS (ordem importa)
 ══════════════════════════════════════ -->
-<script src="./js/config.js"></script>
-<script src="./js/storage.js"></script>
-<script src="./js/app.js"></script>
-<script src="./js/sync.js"></script>
-<script src="./js/login.js"></script>
-<script src="./js/cadastros.js"></script>
-<script src="./js/ui.js"></script>
+
+<!-- ══════════════════════════════════════
+     MODAL DE ASSINATURA DIGITAL
+══════════════════════════════════════ -->
+<div id="sig-overlay" class="sig-overlay" aria-modal="true" role="dialog">
+  <div class="sig-modal">
+    <div class="sig-header">
+      <div>
+        <div class="sig-title" id="sig-title">Assinatura</div>
+        <div class="sig-nome" id="sig-nome"></div>
+      </div>
+      <span class="sig-counter" id="sig-counter">1 de 2</span>
+    </div>
+
+    <div class="sig-hint">Assine no espaço abaixo usando o dedo ou mouse</div>
+
+    <div class="sig-canvas-wrap">
+      <canvas id="sig-canvas" width="500" height="180"></canvas>
+    </div>
+
+    <div class="sig-actions">
+      <button class="btn btn-ghost btn-sm" id="sig-limpar" type="button">🗑 Limpar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" id="sig-pular" type="button">Pular tudo</button>
+        <button class="btn btn-teal" id="sig-confirmar" type="button">Confirmar ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="./js/config.js?v=2"></script>
+<script src="./js/storage.js?v=2"></script>
+<script src="./js/app.js?v=2"></script>
+<script src="./js/sync.js?v=2"></script>
+<script src="./js/login.js?v=2"></script>
+<script src="./js/cadastros.js?v=2"></script>
+<script src="./js/ui.js?v=2"></script>
 
 <!-- Registro do Service Worker -->
 <script>
