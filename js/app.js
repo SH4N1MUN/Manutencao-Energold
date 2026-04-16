@@ -31,7 +31,7 @@ const REF = {
 // ════════════════════════════════════════════════════
 // GOOGLE SHEETS
 // ════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbwN6RsObfniz6_CVLUpUG6Wci_D6k9pBwP8Wm1eTCXyCHX_fkn9jZtwaJJDlvPpm6ZuEA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwupo2wGDJZnmO3xTQYYK26sUd5XrHpyioBdVMrd5D9I5u0d_Q29OlFtXJmjt7-0Xxezg/exec';
 let remoteCadastros = null;
 
 async function apiGet(action){
