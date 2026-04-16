@@ -11,7 +11,7 @@
    ─ Evita cache de rotas não encontradas (404)
 ════════════════════════════════════════════════════ */
 
-const APP_VERSION    = 'v13';
+const APP_VERSION    = 'v12';
 const CACHE_STATIC   = `energold-static-${APP_VERSION}`;
 const CACHE_PAGES    = `energold-pages-${APP_VERSION}`;
 
@@ -91,16 +91,22 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  /* 1. API (Apps Script) — bypass TOTAL, SW não intercepta.
-     O browser faz a request diretamente sem passar pelo SW.
-     Isso resolve o problema de CORS e do fetch offline. */
-  if (API_DOMAINS.some(domain => url.hostname.includes(domain))) {
-    return; // Não chama event.respondWith — browser trata normalmente
+  /* 1. Métodos não-GET vão direto para a rede */
+  if (request.method !== 'GET') {
+    event.respondWith(fetch(request));
+    return;
   }
 
-  /* 2. Métodos não-GET (POST, PUT, etc.) — bypass total */
-  if (request.method !== 'GET') {
-    return; // Não intercepta
+  /* 2. Requisições para a API (Apps Script) — sempre rede */
+  if (API_DOMAINS.some(domain => url.hostname.includes(domain))) {
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(JSON.stringify({ error: 'offline', offline: true }), {
+          headers: { 'Content-Type': 'application/json' }
+        })
+      )
+    );
+    return;
   }
 
   /* 3. Navegação (document) — Network First com fallback para cache */
