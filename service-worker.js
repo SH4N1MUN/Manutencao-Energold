@@ -11,7 +11,7 @@
    ─ Evita cache de rotas não encontradas (404)
 ════════════════════════════════════════════════════ */
 
-const APP_VERSION    = 'v13';
+const APP_VERSION    = 'v14';
 const CACHE_STATIC   = `energold-static-${APP_VERSION}`;
 const CACHE_PAGES    = `energold-pages-${APP_VERSION}`;
 
